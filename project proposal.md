@@ -1,33 +1,8 @@
-<style>
-table { width:100%; border-collapse:collapse; margin:18px 0 24px; }
-table th { font-weight:800 !important; font-size:14px; }
-table td { font-weight:600 !important; }
-table td:first-child { font-weight:800 !important; color:#123B69 !important; }
-table tr:hover td { filter:brightness(.97); }
-</style>
-
 <div align="center">
 
-<svg width="100%" viewBox="0 0 1000 300" role="img" aria-label="LegalLens AI project proposal cover" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="legalLensGradient" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#101B4D"/>
-      <stop offset="52%" stop-color="#2457A7"/>
-      <stop offset="100%" stop-color="#0E9F9A"/>
-    </linearGradient>
-    <radialGradient id="glow" cx="82%" cy="15%" r="70%"><stop offset="0%" stop-color="#67E8F9" stop-opacity=".42"/><stop offset="100%" stop-color="#67E8F9" stop-opacity="0"/></radialGradient>
-  </defs>
-  <rect width="1000" height="300" rx="28" fill="url(#legalLensGradient)"/>
-  <rect width="1000" height="300" rx="28" fill="url(#glow)"/>
-  <circle cx="865" cy="148" r="95" fill="none" stroke="#B7F7F2" stroke-opacity=".35" stroke-width="2"/>
-  <circle cx="865" cy="148" r="68" fill="none" stroke="#B7F7F2" stroke-opacity=".5" stroke-width="2"/>
-  <path d="M825 148h80M865 108v80M837 120l56 56M893 120l-56 56" stroke="#D9FFFC" stroke-opacity=".65" stroke-width="3"/>
-  <text x="64" y="112" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="54" font-weight="700">LegalLens AI</text>
-  <text x="66" y="158" fill="#DCEBFF" font-family="Arial, sans-serif" font-size="22">Evidence-Grounded Agentic AI for Legal Research</text>
-  <text x="66" y="194" fill="#DCEBFF" font-family="Arial, sans-serif" font-size="22">Case Analysis &amp; Citation Verification</text>
-  <rect x="66" y="225" width="210" height="34" rx="17" fill="#FFFFFF" fill-opacity=".16"/>
-  <text x="171" y="248" text-anchor="middle" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="14" font-weight="700" letter-spacing="1.5">PROJECT PROPOSAL</text>
-</svg>
+<img src="docs/assets/banner.svg" alt="LegalLens AI - Project Proposal Cover" width="100%">
+
+<br>
 
 **Prepared by: Mohamed Shakir**  
 **30 October 2026**
