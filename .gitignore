@@ -1,0 +1,146 @@
+# ==============================================================================
+# LegalLens AI - Monorepo Unified .gitignore
+# Single authoritative gitignore for Frontend (React 19), .NET 10 API, Python AI Service
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Environment Variables & Local Secrets
+# ------------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.local
+local.settings.json
+
+# ------------------------------------------------------------------------------
+# 2. Node.js & Web Frontend (apps/web)
+# ------------------------------------------------------------------------------
+node_modules/
+*/node_modules/
+apps/web/node_modules/
+dist/
+*/dist/
+apps/web/dist/
+dist-ssr/
+apps/web/dist-ssr/
+.vite/
+apps/web/.vite/
+package-lock.json.bak
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ------------------------------------------------------------------------------
+# 3. Python & AI Intelligence Service (apps/ai-service)
+# ------------------------------------------------------------------------------
+__pycache__/
+*/__pycache__/
+apps/ai-service/__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyd
+
+# Python Virtual Environments
+.venv/
+*/.venv/
+venv/
+*/venv/
+env/
+*/env/
+ENV/
+env.bak/
+venv.bak/
+
+# Testing & Coverage
+.pytest_cache/
+*/.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Packaging
+*.egg-info/
+*/.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+
+# ------------------------------------------------------------------------------
+# 4. .NET 10 & C# API (apps/api)
+# ------------------------------------------------------------------------------
+[Bb]in/
+*/[Bb]in/
+apps/api/bin/
+[Oo]bj/
+*/[Oo]bj/
+apps/api/obj/
+apps/api/obj/*
+
+# NuGet Packages & Assets
+*.nuget.props
+*.nuget.targets
+project.assets.json
+project.lock.json
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+# Visual Studio & OmniSharp Cache
+.vs/
+*/.vs/
+.ionide/
+
+# ------------------------------------------------------------------------------
+# 5. Operating System & Editor Files
+# ------------------------------------------------------------------------------
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Editors & IDEs
+.idea/
+*/.idea/
+*.swp
+*.swo
+*~
+*.bak
+
+# ------------------------------------------------------------------------------
+# 6. Database & Docker Local Artifacts
+# ------------------------------------------------------------------------------
+pgdata/
+*/pgdata/
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# ------------------------------------------------------------------------------
+# 7. Generic Logs & Dumps
+# ------------------------------------------------------------------------------
+logs/
+*.log
+*.dump
+*.stackdump
