@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { ChambersShell } from '../components/layout/ChambersShell';
-import { LandingPage } from '../pages/landing/LandingPage';
+import { LandingPage } from '../pages/LandingPage';
 import { SignInPage } from '../pages/auth/SignInPage';
 import { RegisterPage } from '../pages/auth/RegisterPage';
 import { DashboardReturningPage } from '../pages/dashboard/DashboardReturningPage';
@@ -19,8 +19,12 @@ import { ProfileSettingsPage } from '../pages/settings/ProfileSettingsPage';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Public Pages */}
+      {/* Root Landing Page */}
       <Route path="/" element={<LandingPage />} />
+
+      {/* Public Auth Pages */}
+      <Route path="/login" element={<SignInPage />} />
+      <Route path="/register" element={<RegisterPage />} />
       <Route path="/auth/login" element={<SignInPage />} />
       <Route path="/auth/register" element={<RegisterPage />} />
 
