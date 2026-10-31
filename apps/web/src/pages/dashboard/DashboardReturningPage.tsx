@@ -1,40 +1,79 @@
 import React from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { mockUser, mockRecentDockets } from '../../services/mockData';
+import { useTheme } from '../../context/ThemeContext';
 
 export const DashboardReturningPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isDark } = useTheme();
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full pb-16">
       {/* Synthetic Dataset Evaluation Banner */}
-      <div className="w-full bg-surface-container border-b border-outline-variant/30 px-gutter py-2 text-center text-label-sm text-on-surface-variant flex items-center justify-center gap-space-xs">
-        <span className="material-symbols-outlined text-[16px] text-tertiary">info</span>
+      <div
+        className={`w-full py-2 px-6 text-center text-[12px] font-mono border-b flex items-center justify-center gap-2 ${
+          isDark
+            ? 'bg-[#0D1914] border-emerald-500/15 text-[#A3C2B6]'
+            : 'bg-[#E8F4EE] border-[rgba(5,150,105,0.12)] text-[#52796F]'
+        }`}
+      >
+        <span
+          className={`material-symbols-outlined text-[16px] ${
+            isDark ? 'text-emerald-400' : 'text-[#059669]'
+          }`}
+        >
+          verified
+        </span>
         <span>
-          <strong>Simulated Dataset Active:</strong> Research results are generated using the synthetic employment law benchmark dataset for system demonstration.
+          <strong>Simulated Sri Lankan Labour Law Active:</strong> Automated citation verification against Section 13 benchmark dataset.
         </span>
       </div>
 
-      <div className="px-margin py-space-xl max-w-7xl mx-auto w-full flex flex-col gap-space-xl">
+      <div className="px-6 md:px-10 py-8 max-w-7xl mx-auto w-full flex flex-col gap-8">
+        
         {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between pb-space-lg border-b border-outline-variant/30 gap-space-lg">
-          <div className="flex flex-col gap-space-xs max-w-2xl">
-            <div className="flex items-center gap-space-xs text-primary font-label-sm uppercase tracking-wider font-semibold">
-              <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-              <span>{mockUser.organization} • Active Workspace</span>
+        <div
+          className={`flex flex-col lg:flex-row lg:items-end justify-between pb-6 border-b gap-4 ${
+            isDark ? 'border-emerald-500/15' : 'border-[rgba(5,150,105,0.12)]'
+          }`}
+        >
+          <div className="flex flex-col gap-1 max-w-2xl">
+            <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-mono text-[11px] uppercase tracking-wider font-semibold">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>{mockUser.organization} • Active Chambers</span>
             </div>
-            <h1 className="font-serif text-headline-xl text-on-surface tracking-tight font-semibold">
-              Research Dashboard
+            <h1
+              className={`text-[32px] font-extrabold tracking-tight font-headline ${
+                isDark ? 'text-white' : 'text-[#0F172A]'
+              }`}
+            >
+              Research Workspace
             </h1>
-            <p className="font-sans text-body-lg text-on-surface-variant">
-              Manage your legal research inquiries, explore case comparisons, and verify citations against source passages.
+            <p className={`text-[14px] ${isDark ? 'text-[#94A79E]' : 'text-[#475569]'}`}>
+              Manage active legal inquiries, cross-examine judicial ratio decidendi, and export verified reports.
             </p>
           </div>
 
-          <div className="flex items-center gap-space-md">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/compare')}
+              className={`px-4 py-2.5 rounded-xl text-[13px] font-medium border transition-all flex items-center gap-1.5 cursor-pointer ${
+                isDark
+                  ? 'bg-[#0D1914] border-emerald-500/20 text-white hover:bg-[#13251E]'
+                  : 'bg-white border-[rgba(5,150,105,0.2)] text-[#0F172A] hover:bg-[#E8F4EE]'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">compare_arrows</span>
+              <span>Compare Precedents</span>
+            </button>
+
             <button
               onClick={() => navigate('/research/new')}
-              className="flex items-center gap-space-xs px-space-md py-space-sm rounded bg-primary-container text-on-primary font-title-sm text-title-sm shadow-[0_1px_3px_rgba(30,58,95,0.12)] hover:bg-primary transition-colors cursor-pointer"
+              className={`px-5 py-2.5 rounded-xl font-bold text-[13px] tracking-tight transition-all cursor-pointer flex items-center gap-2 ${
+                isDark
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-[#041F16] shadow-[0_0_18px_rgba(16,185,129,0.35)] hover:shadow-[0_0_24px_rgba(16,185,129,0.5)]'
+                  : 'bg-[#059669] hover:bg-[#047857] text-white shadow-[0_2px_12px_rgba(5,150,105,0.25)]'
+              }`}
             >
               <span className="material-symbols-outlined text-[18px]">add_circle</span>
               <span>New Research Question</span>
@@ -43,56 +82,166 @@ export const DashboardReturningPage: React.FC = () => {
         </div>
 
         {/* High-Level Metric Tiles */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-space-md">
-          <div className="p-space-lg bg-surface-container-lowest rounded-md border border-outline-variant/30 shadow-[0_1px_3px_rgba(30,58,95,0.04)] flex flex-col gap-1">
-            <div className="flex items-center justify-between text-outline">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">Research Projects</span>
-              <span className="material-symbols-outlined text-[20px] text-primary">folder</span>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div
+            className={`p-5 rounded-2xl border transition-all ${
+              isDark
+                ? 'bg-[#0D1914] border-emerald-500/20 shadow-[0_10px_25px_rgba(0,0,0,0.4)]'
+                : 'bg-white border-[rgba(5,150,105,0.15)] shadow-[0_4px_20px_rgba(15,23,42,0.04)]'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-mono text-[11px] uppercase tracking-wider text-[#52796F] dark:text-[#7E9F90] font-semibold">
+                Active Projects
+              </span>
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#E8F4EE] text-[#059669]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">folder</span>
+              </div>
             </div>
-            <span className="font-serif text-[32px] font-semibold text-on-surface">3</span>
-            <span className="font-label-sm text-label-sm text-primary flex items-center gap-0.5">
-              <span className="material-symbols-outlined text-[14px]">check</span> Active inquiries
-            </span>
+            <div
+              className={`text-[32px] font-extrabold font-headline tracking-tight ${
+                isDark ? 'text-white' : 'text-[#0F172A]'
+              }`}
+            >
+              3
+            </div>
+            <div className="flex items-center gap-1 text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold mt-1">
+              <span className="material-symbols-outlined text-[14px]">check_circle</span>
+              <span>All citations corroborated</span>
+            </div>
           </div>
 
-          <div className="p-space-lg bg-surface-container-lowest rounded-md border border-outline-variant/30 shadow-[0_1px_3px_rgba(30,58,95,0.04)] flex flex-col gap-1">
-            <div className="flex items-center justify-between text-outline">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">Simulated Documents</span>
-              <span className="material-symbols-outlined text-[20px] text-secondary">menu_book</span>
+          <div
+            className={`p-5 rounded-2xl border transition-all ${
+              isDark
+                ? 'bg-[#0D1914] border-emerald-500/20 shadow-[0_10px_25px_rgba(0,0,0,0.4)]'
+                : 'bg-white border-[rgba(5,150,105,0.15)] shadow-[0_4px_20px_rgba(15,23,42,0.04)]'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-mono text-[11px] uppercase tracking-wider text-[#52796F] dark:text-[#7E9F90] font-semibold">
+                Simulated Corpus
+              </span>
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#E8F4EE] text-[#059669]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">library_books</span>
+              </div>
             </div>
-            <span className="font-serif text-[32px] font-semibold text-on-surface">65</span>
-            <span className="font-label-sm text-label-sm text-secondary">Acts, Cases & Contracts</span>
+            <div
+              className={`text-[32px] font-extrabold font-headline tracking-tight ${
+                isDark ? 'text-white' : 'text-[#0F172A]'
+              }`}
+            >
+              65
+            </div>
+            <div className="text-[11px] text-[#52796F] dark:text-[#7E9F90] mt-1 font-mono">
+              Acts, Decrees & Judgments
+            </div>
           </div>
 
-          <div className="p-space-lg bg-surface-container-lowest rounded-md border border-outline-variant/30 shadow-[0_1px_3px_rgba(30,58,95,0.04)] flex flex-col gap-1">
-            <div className="flex items-center justify-between text-outline">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">Citations Verified</span>
-              <span className="material-symbols-outlined text-[20px] text-primary">verified</span>
+          <div
+            className={`p-5 rounded-2xl border transition-all ${
+              isDark
+                ? 'bg-[#0D1914] border-emerald-500/20 shadow-[0_10px_25px_rgba(0,0,0,0.4)]'
+                : 'bg-white border-[rgba(5,150,105,0.15)] shadow-[0_4px_20px_rgba(15,23,42,0.04)]'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-mono text-[11px] uppercase tracking-wider text-[#52796F] dark:text-[#7E9F90] font-semibold">
+                Passages Grounded
+              </span>
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#E8F4EE] text-[#059669]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">fact_check</span>
+              </div>
             </div>
-            <span className="font-serif text-[32px] font-semibold text-primary">9</span>
-            <span className="font-label-sm text-label-sm text-outline">Linked to exact passages</span>
+            <div className="text-[32px] font-extrabold font-headline tracking-tight text-emerald-600 dark:text-emerald-400">
+              9
+            </div>
+            <div className="text-[11px] text-[#52796F] dark:text-[#7E9F90] mt-1 font-mono">
+              Deterministic line-by-line matches
+            </div>
           </div>
 
-          <div className="p-space-lg bg-surface-container-lowest rounded-md border border-outline-variant/30 shadow-[0_1px_3px_rgba(30,58,95,0.04)] flex flex-col gap-1">
-            <div className="flex items-center justify-between text-outline">
-              <span className="font-label-sm text-label-sm uppercase tracking-wider">Target Domain</span>
-              <span className="material-symbols-outlined text-[20px] text-secondary">gavel</span>
+          <div
+            className={`p-5 rounded-2xl border transition-all ${
+              isDark
+                ? 'bg-[#0D1914] border-emerald-500/20 shadow-[0_10px_25px_rgba(0,0,0,0.4)]'
+                : 'bg-white border-[rgba(5,150,105,0.15)] shadow-[0_4px_20px_rgba(15,23,42,0.04)]'
+            }`}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <span className="font-mono text-[11px] uppercase tracking-wider text-[#52796F] dark:text-[#7E9F90] font-semibold">
+                Jurisdiction
+              </span>
+              <div
+                className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  isDark ? 'bg-emerald-500/10 text-emerald-400' : 'bg-[#E8F4EE] text-[#059669]'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[18px]">gavel</span>
+              </div>
             </div>
-            <span className="font-serif text-[28px] font-semibold text-on-surface">Employment</span>
-            <span className="font-label-sm text-label-sm text-outline">Sri Lanka Labour Law</span>
+            <div
+              className={`text-[24px] font-extrabold font-headline tracking-tight mt-1 ${
+                isDark ? 'text-white' : 'text-[#0F172A]'
+              }`}
+            >
+              Labour Law
+            </div>
+            <div className="text-[11px] text-[#52796F] dark:text-[#7E9F90] mt-1 font-mono">
+              Sri Lanka Tribunal System
+            </div>
           </div>
+
         </div>
 
         {/* Recent Research Projects Table */}
-        <div className="bg-surface-container-lowest rounded-md border border-outline-variant/30 shadow-[0_1px_3px_rgba(30,58,95,0.04)] overflow-hidden">
-          <div className="p-space-md border-b border-outline-variant/20 flex items-center justify-between">
-            <div className="flex items-center gap-space-sm">
-              <h2 className="font-serif text-title-lg text-on-surface font-semibold">Recent Research Inquiries</h2>
-              <span className="px-space-xs py-0.5 rounded bg-surface-container text-primary font-label-sm text-label-sm font-semibold">
-                Simulated Cases
+        <div
+          className={`rounded-2xl border overflow-hidden transition-all ${
+            isDark
+              ? 'bg-[#0D1914] border-emerald-500/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]'
+              : 'bg-white border-[rgba(5,150,105,0.15)] shadow-[0_4px_25px_rgba(15,23,42,0.04)]'
+          }`}
+        >
+          <div
+            className={`p-5 border-b flex items-center justify-between ${
+              isDark ? 'border-emerald-500/15' : 'border-[rgba(5,150,105,0.12)]'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <h2
+                className={`text-[17px] font-extrabold font-headline ${
+                  isDark ? 'text-white' : 'text-[#0F172A]'
+                }`}
+              >
+                Recent Research Inquiries
+              </h2>
+              <span
+                className={`px-2 py-0.5 rounded font-mono text-[10px] font-bold uppercase tracking-wider ${
+                  isDark
+                    ? 'bg-emerald-500/15 text-emerald-300'
+                    : 'bg-[#E8F4EE] text-[#064E3B]'
+                }`}
+              >
+                Grounding Active
               </span>
             </div>
-            <Link to="/research/history" className="font-label-sm text-label-sm text-primary hover:underline font-medium">
+            <Link
+              to="/research/history"
+              className="text-[12px] font-mono text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
+            >
               View all inquiries →
             </Link>
           </div>
@@ -100,44 +249,67 @@ export const DashboardReturningPage: React.FC = () => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-outline-variant/20 bg-surface-container-low/50 text-outline font-label-sm text-label-sm uppercase tracking-wider">
-                  <th className="py-space-sm px-space-md">Inquiry ID</th>
-                  <th className="py-space-sm px-space-md">Research Subject</th>
-                  <th className="py-space-sm px-space-md">Legal Domain</th>
-                  <th className="py-space-sm px-space-md">Sources Found</th>
-                  <th className="py-space-sm px-space-md">Confidence</th>
-                  <th className="py-space-sm px-space-md">Status</th>
-                  <th className="py-space-sm px-space-md text-right">Actions</th>
+                <tr
+                  className={`border-b font-mono text-[11px] uppercase tracking-wider ${
+                    isDark
+                      ? 'border-emerald-500/15 bg-[#060D0A] text-[#7E9F90]'
+                      : 'border-[rgba(5,150,105,0.12)] bg-[#F4F8F6] text-[#52796F]'
+                  }`}
+                >
+                  <th className="py-3 px-5">Inquiry ID</th>
+                  <th className="py-3 px-5">Research Subject</th>
+                  <th className="py-3 px-5">Legal Domain</th>
+                  <th className="py-3 px-5">Sources Found</th>
+                  <th className="py-3 px-5">Grounding</th>
+                  <th className="py-3 px-5">Status</th>
+                  <th className="py-3 px-5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/20 font-body-sm text-body-sm">
+              <tbody
+                className={`divide-y text-[13px] ${
+                  isDark ? 'divide-emerald-500/10' : 'divide-[rgba(5,150,105,0.08)]'
+                }`}
+              >
                 {mockRecentDockets.map((row) => (
                   <tr
                     key={row.docketNumber}
                     onClick={() => navigate(`/research/${row.docketNumber}`)}
-                    className="hover:bg-surface-container-low/60 transition-colors cursor-pointer group"
+                    className={`transition-colors cursor-pointer group ${
+                      isDark ? 'hover:bg-[#13251E]' : 'hover:bg-[#E8F4EE]/60'
+                    }`}
                   >
-                    <td className="py-space-md px-space-md font-mono font-medium text-on-surface">
+                    <td className="py-4 px-5 font-mono text-[12px] font-semibold text-emerald-600 dark:text-emerald-400">
                       {row.docketNumber}
                     </td>
-                    <td className="py-space-md px-space-md font-medium text-on-surface group-hover:text-primary transition-colors">
+                    <td
+                      className={`py-4 px-5 font-semibold transition-colors group-hover:text-emerald-600 dark:group-hover:text-emerald-400 ${
+                        isDark ? 'text-white' : 'text-[#0F172A]'
+                      }`}
+                    >
                       {row.subject}
                     </td>
-                    <td className="py-space-md px-space-md text-on-surface-variant">
+                    <td className={`py-4 px-5 ${isDark ? 'text-[#94A79E]' : 'text-[#52796F]'}`}>
                       {row.jurisdiction}
                     </td>
-                    <td className="py-space-md px-space-md text-secondary font-medium">
-                      {row.sllrPrecedents} cases linked
+                    <td className="py-4 px-5 font-mono text-[12px] text-emerald-600 dark:text-emerald-300 font-medium">
+                      {row.sllrPrecedents} cases
                     </td>
-                    <td className="py-space-md px-space-md font-semibold text-primary">
+                    <td className="py-4 px-5 font-mono text-[12px] font-bold text-emerald-600 dark:text-emerald-400">
                       {row.confidence}
                     </td>
-                    <td className="py-space-md px-space-md">
-                      <span className="inline-flex items-center px-space-xs py-0.5 rounded text-label-sm font-medium bg-surface-container text-primary font-semibold">
+                    <td className="py-4 px-5">
+                      <span
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-mono text-[10px] font-bold uppercase tracking-wider ${
+                          isDark
+                            ? 'bg-emerald-500/15 text-emerald-300'
+                            : 'bg-[#E8F4EE] text-[#064E3B]'
+                        }`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                         {row.status}
                       </span>
                     </td>
-                    <td className="py-space-md px-space-md text-right text-primary font-medium group-hover:underline">
+                    <td className="py-4 px-5 text-right font-bold text-[12px] text-emerald-600 dark:text-emerald-400 group-hover:underline">
                       View Synthesis →
                     </td>
                   </tr>
@@ -146,6 +318,7 @@ export const DashboardReturningPage: React.FC = () => {
             </table>
           </div>
         </div>
+
       </div>
     </div>
   );

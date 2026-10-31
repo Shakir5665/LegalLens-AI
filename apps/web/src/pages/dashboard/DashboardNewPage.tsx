@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../../context/ThemeContext';
 
 export const DashboardNewPage: React.FC = () => {
   const navigate = useNavigate();
+  const { isDark } = useTheme();
 
   const starterQueries = [
     {
@@ -26,45 +28,80 @@ export const DashboardNewPage: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col w-full">
-      <div className="px-margin py-space-xl max-w-7xl mx-auto w-full flex flex-col gap-space-xl">
+    <div className="flex flex-col w-full pb-16">
+      <div className="px-6 md:px-10 py-8 max-w-7xl mx-auto w-full flex flex-col gap-8">
+        
         {/* Onboarding Welcome Header */}
-        <div className="p-space-xl bg-surface-container-lowest rounded-md border border-outline-variant/30 shadow-[0_1px_3px_rgba(30,58,95,0.04)] flex flex-col gap-space-sm">
-          <div className="flex items-center gap-space-xs text-primary font-label-sm uppercase tracking-wider font-semibold">
+        <div
+          className={`p-8 rounded-2xl border flex flex-col gap-3 transition-all ${
+            isDark
+              ? 'bg-[#0D1914] border-emerald-500/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]'
+              : 'bg-white border-[rgba(5,150,105,0.15)] shadow-[0_4px_25px_rgba(15,23,42,0.04)]'
+          }`}
+        >
+          <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-mono text-[11px] uppercase tracking-wider font-bold">
             <span className="material-symbols-outlined text-[18px]">verified</span>
             <span>Research Workspace Initialized</span>
           </div>
-          <h1 className="font-serif text-headline-lg text-on-surface font-semibold">
+          <h1
+            className={`text-[32px] font-extrabold tracking-tight font-headline ${
+              isDark ? 'text-white' : 'text-[#0F172A]'
+            }`}
+          >
             Welcome to LegalLens AI
           </h1>
-          <p className="font-sans text-body-md text-on-surface-variant max-w-3xl leading-relaxed">
-            LegalLens AI helps you perform evidence-grounded legal research with verified citations. The platform uses a synthetic benchmark dataset simulating Sri Lankan employment law to test research queries, citation verification, and report generation.
+          <p
+            className={`text-[15px] max-w-3xl leading-relaxed ${
+              isDark ? 'text-[#94A79E]' : 'text-[#475569]'
+            }`}
+          >
+            LegalLens AI automates evidence-grounded legal research with verified citations. The platform uses a synthetic benchmark dataset simulating Sri Lankan employment law to test research queries, citation verification, and report generation.
           </p>
         </div>
 
         {/* Starter Query Cards */}
-        <div className="flex flex-col gap-space-md">
-          <h2 className="font-serif text-title-lg text-on-surface font-semibold">
-            Suggested Research Questions
+        <div className="flex flex-col gap-4">
+          <h2
+            className={`text-[20px] font-extrabold font-headline ${
+              isDark ? 'text-white' : 'text-[#0F172A]'
+            }`}
+          >
+            Suggested Starter Inquiries
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-space-lg">
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {starterQueries.map((q) => (
               <div
                 key={q.title}
-                className="p-space-lg bg-surface-container-lowest rounded-md border border-outline-variant/30 shadow-[0_1px_3px_rgba(30,58,95,0.04)] flex flex-col justify-between gap-space-md hover:border-primary/50 transition-colors"
+                className={`p-6 rounded-2xl border flex flex-col justify-between gap-6 transition-all ${
+                  isDark
+                    ? 'bg-[#0D1914] border-emerald-500/20 hover:border-emerald-500/40 shadow-[0_10px_25px_rgba(0,0,0,0.4)]'
+                    : 'bg-white border-[rgba(5,150,105,0.15)] hover:border-[#059669]/40 shadow-[0_4px_20px_rgba(15,23,42,0.04)]'
+                }`}
               >
-                <div className="flex flex-col gap-space-xs">
-                  <span className="font-label-sm text-label-sm text-primary uppercase tracking-wider font-semibold">
+                <div className="flex flex-col gap-2">
+                  <span className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-bold uppercase tracking-wider">
                     {q.statute}
                   </span>
-                  <h3 className="font-serif text-title-md text-on-surface font-semibold">{q.title}</h3>
-                  <p className="font-sans text-body-sm text-on-surface-variant leading-relaxed">
+                  <h3
+                    className={`text-[17px] font-bold font-headline ${
+                      isDark ? 'text-white' : 'text-[#0F172A]'
+                    }`}
+                  >
+                    {q.title}
+                  </h3>
+                  <p className={`text-[13px] leading-relaxed ${isDark ? 'text-[#94A79E]' : 'text-[#475569]'}`}>
                     {q.description}
                   </p>
                 </div>
+                
                 <button
                   onClick={() => navigate(`/research/new?q=${encodeURIComponent(q.params)}`)}
-                  className="w-full py-2 px-space-md rounded bg-surface-container text-primary font-title-sm text-title-sm font-semibold hover:bg-primary-container hover:text-on-primary transition-colors cursor-pointer flex items-center justify-center gap-space-xs"
+                  className={`w-full py-2.5 px-4 rounded-xl text-[13px] font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+                    isDark
+                      ? 'bg-[#13251E] text-emerald-300 hover:bg-emerald-500 hover:text-[#041F16] border border-emerald-500/25'
+                      : 'bg-[#E8F4EE] text-[#059669] hover:bg-[#059669] hover:text-white border border-[rgba(5,150,105,0.2)]'
+                  }`}
                 >
                   <span>Start This Research</span>
                   <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
@@ -73,6 +110,7 @@ export const DashboardNewPage: React.FC = () => {
             ))}
           </div>
         </div>
+
       </div>
     </div>
   );

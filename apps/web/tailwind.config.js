@@ -61,6 +61,25 @@ export default {
         "error-container": "#ffdad6",
         "on-error": "#ffffff",
         "on-error-container": "#93000a",
+
+        "obsidian": "#060D0A",
+        "forest-surface": "#0D1914",
+        "forest-card": "#13251E",
+        "forest-card-hover": "#1A3229",
+        "emerald-neon": "#10B981",
+        "mint-glow": "#34D399",
+        "sage-muted": "#7E9F90",
+        "sage-light": "#A3C2B6",
+
+        // Light Theme Tokens
+        "frost-canvas": "#F4F8F6",
+        "mint-surface": "#E8F4EE",
+        "cyber-emerald": "#059669",
+        "luminous-mint": "#10B981",
+        "eucalyptus-sage": "#52796F",
+        "pine-shadow": "#064E3B",
+        "slate-headings": "#0F172A",
+        "slate-body": "#475569",
       },
       borderRadius: {
         DEFAULT: "0.25rem", // 4px
@@ -82,9 +101,11 @@ export default {
         "margin-mobile": "1rem", // 16px
       },
       fontFamily: {
+        sans: ["'Plus Jakarta Sans'", "Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
+        body: ["Inter", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+        mono: ["'JetBrains Mono'", "monospace"],
         serif: ["Newsreader", "Georgia", "serif"],
-        sans: ["Inter", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "sans-serif"],
-        headline: ["Newsreader", "serif"],
+        headline: ["'Plus Jakarta Sans'", "sans-serif"],
         citation: ["Newsreader", "serif"],
       },
       fontSize: {
