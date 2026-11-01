@@ -1,16 +1,17 @@
 # ⚖️ LegalLens AI — Complete Development Roadmap
 
-> **Tagline:** _Evidence before Answers_  
+> **Tagline:** _Evidence before Answers_
 > An Evidence-Grounded Agentic AI Platform for Sri Lankan Legal Research, Case Analysis and Citation Verification
 
 ---
 
 <p align="center">
+  <img src="https://img.shields.io/badge/Status-Phase%200%20Completed-success?style=for-the-badge&logo=checkmarx" alt="Status" />
+  <img src="https://img.shields.io/badge/Next%20Phase-Phase%201%20Backend-blue?style=for-the-badge&logo=fastapi" alt="Next Phase" />
+  <img src="https://img.shields.io/badge/Progress-1%20of%2013%20Phases%20(8%25)-blueviolet?style=for-the-badge" alt="Progress" />
+  <img src="https://img.shields.io/badge/Python-3.12.10-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Version" />
   <img src="https://img.shields.io/badge/Duration-12%20Weeks-blue?style=for-the-badge&logo=calendar" alt="Duration" />
   <img src="https://img.shields.io/badge/Effort-240%20Hours-indigo?style=for-the-badge&logo=clock" alt="Effort" />
-  <img src="https://img.shields.io/badge/Commitment-20%20Hours%2FWeek-violet?style=for-the-badge" alt="Commitment" />
-  <img src="https://img.shields.io/badge/Status-Phase%200%20Ready-success?style=for-the-badge" alt="Status" />
-  <img src="https://img.shields.io/badge/Phases-13%20Total-orange?style=for-the-badge" alt="Phases" />
 </p>
 
 Your project, **LegalLens AI — Evidence before Answers**, should be developed as an actual AI engineering product, not simply as a chatbot with RAG.
@@ -18,19 +19,33 @@ Your project, **LegalLens AI — Evidence before Answers**, should be developed 
 I recommend following a 12-week, 240-hour development roadmap, based on your proposal. We will build it incrementally, learn each technology before using it, and make sure every phase produces something functional.
 
 > [!IMPORTANT]
->
 > ### The Most Important Principle
->
 > $$\mathbf{Learn} \longrightarrow \mathbf{Design} \longrightarrow \mathbf{Implement} \longrightarrow \mathbf{Test} \longrightarrow \mathbf{Evaluate} \longrightarrow \mathbf{Document} \longrightarrow \mathbf{Integrate}$$
+
+---
+
+## Current Project Status
+
+| Metric | Status | Details |
+| :--- | :--- | :--- |
+| **Current Milestone** | **Phase 0 — Project Foundation** | **Completed** (1 November 2026) |
+| **Next Milestone** | **Phase 1 — Backend Engineering Fundamentals** | Pending implementation (Tasks 1.1–1.9) |
+| **Overall Progress** | **8%** | 1 of 13 development phases completed |
+| **Repository Baseline** | Stable | Public Monorepo on `main` ([github.com/Shakir5665/LegalLens-AI](https://github.com/Shakir5665/LegalLens-AI)) |
+| **Backend Runtime** | Configured | Python 3.12.10 in root `venv/` with baseline health check |
+
+> [!NOTE]
+> **Implementation Boundary:** Phase 0 established the development environment, monorepo directory skeleton, security rules, environment templates, and architectural decision records. **All core application capabilities** (PostgreSQL/pgvector storage, hybrid retrieval pipelines, LangGraph investigation workflows, Gemini LLM calls, claim verification engine, and React frontend) **remain unimplemented target architecture** to be developed progressively starting in Phase 1.
 
 ---
 
 ## 📑 Table of Contents
 
+- [Current Project Status](#current-project-status)
 - [1. Complete Development Roadmap](#1-complete-development-roadmap)
 - [2. What Exactly Will We Build in Each Phase?](#2-what-exactly-will-we-build-in-each-phase)
-  - [Phase 0 — Project Foundation](#phase-0--project-foundation)
-  - [Phase 1 — Backend Engineering Fundamentals](#phase-1--backend-engineering-fundamentals)
+  - [Phase 0 — Project Foundation (Completed)](#phase-0--project-foundation)
+  - [Phase 1 — Backend Engineering Fundamentals (Next Up)](#phase-1--backend-engineering-fundamentals)
   - [Phase 2 — LLM Engineering](#phase-2--llm-engineering)
   - [Phase 3 — Database & Document Intelligence](#phase-3--database--document-intelligence)
   - [Phase 4 — Embeddings & Basic RAG](#phase-4--embeddings--basic-rag)
@@ -87,40 +102,60 @@ This is the more important part. I want you to understand the actual engineering
 
 ### Phase 0 — Project Foundation
 
-> _Start here_
+> **Status:** ✅ **Completed** (1 November 2026)
+> **Milestone Goal:** Establish a clean, maintainable, and development-ready engineering environment.
 
 **Objective:** Establish a clean, maintainable engineering environment.
 
-|  Task   | What you will do                                    |
-| :-----: | :-------------------------------------------------- |
-| **0.1** | Finalise MVP requirements and acceptance criteria   |
-| **0.2** | Understand the proposed system architecture         |
-| **0.3** | Create GitHub repository                            |
-| **0.4** | Establish frontend and backend project structure    |
-| **0.5** | Configure Python virtual environment                |
-| **0.6** | Configure environment variables and .env.example    |
-| **0.7** | Set up Git workflow and .gitignore                  |
-| **0.8** | Write initial README and architecture documentation |
+|  Task   | What you will do                                    | Status |
+| :-----: | :-------------------------------------------------- | :----: |
+| **0.1** | Finalise MVP requirements and acceptance criteria   | ✅ Completed |
+| **0.2** | Understand the proposed system architecture         | ✅ Completed |
+| **0.3** | Create GitHub repository                            | ✅ Completed |
+| **0.4** | Establish frontend and backend project structure    | ✅ Completed |
+| **0.5** | Configure Python virtual environment                | ✅ Completed |
+| **0.6** | Configure environment variables and .env.example    | ✅ Completed |
+| **0.7** | Set up Git workflow and .gitignore                  | ✅ Completed |
+| **0.8** | Write initial README and architecture documentation | ✅ Completed |
 
 **Deliverable:** A clean project repository ready for development.
+
+#### Phase 0 Verified Execution & Task Completion Summary
+
+| Task | Title | Verified Execution & Completion Details |
+| :---: | :--- | :--- |
+| **0.1** | **Finalize MVP Scope** | Selected Complete Functional MVP. Bounded the legal corpus strictly to Sri Lankan Employment Law (*Industrial Disputes Act*, *Termination of Employment of Workmen Act No. 45 of 1971*, *Payment of Gratuity Act No. 12 of 1983*, and selected judicial decisions). Established 20 functional requirements (`FR-01` to `FR-20`) and non-functional requirements. Defined 4 source authenticity classifications (`VerifiedOfficial`, `VerifiedSecondary`, `SyntheticDemo`, `Unverified`) and 5 citation verification outcomes (`Supported`, `Partially supported`, `Unsupported`, `Contradicted`, `Ambiguous`). Confirmed that knowledge graph functionality is not a mandatory MVP dependency and is deferred to post-MVP. |
+| **0.2** | **Finalize System Architecture** | Selected a single modular Python FastAPI backend, formally evaluating and rejecting the previously considered .NET + FastAPI dual-backend split ([ADR-001](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-001-use-a-modular-monolithic-backend)). Defined 4 logical layers (Application, Agent Orchestration, Legal Intelligence, Harness and Governance). Mapped the 7-stage sequential investigation workflow. Established controlled LangGraph orchestration, direct Python module calls for internal retrieval/verification, Python MCP SDK for external client interoperability ([ADR-008](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-008-use-mcp-for-external-tool-interoperability)), and deterministic report templates ([ADR-009](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-009-keep-critical-operations-deterministic)). |
+| **0.3** | **Create GitHub Repository** | Created public GitHub repository at [`https://github.com/Shakir5665/LegalLens-AI`](https://github.com/Shakir5665/LegalLens-AI) with default branch `main`. Public visibility was approved as an explicit architectural decision ([ADR-014](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation)), mandating strict defense-in-depth secret isolation across all tooling, configuration files, and documentation. |
+| **0.4** | **Establish Project Structure** | Established monorepo layout: `apps/web/`, `apps/api/`, `docs/architecture/`, `docs/decisions/`, `infrastructure/`, and `tests/`. The backend modular package structure includes `apps/api/app/` (`api/`, `core/`, `db/`, `schemas/`, `services/`) with a baseline `/health` FastAPI endpoint in `apps/api/app/main.py`. *(Foundational skeleton only; domain logic, database models, and service implementations remain unimplemented).* |
+| **0.5** | **Configure Python Environment** | Standardized on Python 3.12 (specifically Python 3.12.10) managed via a dedicated virtual environment (`venv/`) at repository root ([ADR-013](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-013-select-python-312-as-the-core-backend-runtime)), resolving coexistence with system Python 3.14.3. Verified Python and pip operate strictly through the virtual environment. Windows PowerShell activation: `.\venv\Scripts\Activate.ps1`. |
+| **0.6** | **Configure Environment Variables** | Created configuration template `apps/api/.env.example` and local placeholder file `apps/api/.env` containing sanitized dummy values for application settings, database connection URL, Gemini API key, and frontend CORS origins. Ensured no actual credentials or secrets are committed. |
+| **0.7** | **Configure Git Workflow and .gitignore** | Configured root `.gitignore` covering environment files and secrets (`.env*` except `!.env.example`), virtual environments (`venv/`, `.venv/`), Python cache files (`__pycache__/`, `*.pyc`), test/tool caches (`.pytest_cache/`, `.coverage`), frontend dependencies (`node_modules/`), build outputs (`dist/`, `build/`), and OS/IDE files. Verified `.env` exclusion. |
+| **0.8** | **Create Initial Documentation** | Authored and published initial documentation: `README.md`, `docs/architecture/system-architecture.md`, and `docs/decisions/architecture-decisions.md` (recording ADR-001 through ADR-014). |
+
+> [!WARNING]
+> **Implementation Boundary:** Phase 0 delivered structural and architectural readiness. Core backend API endpoints (auth, projects, documents, investigations), database schemas and migrations, pgvector semantic search, LangGraph stateful agents, citation verification engines, and React UI components are **not yet implemented**. They will be engineered systematically starting in Phase 1.
 
 ---
 
 ### Phase 1 — Backend Engineering Fundamentals
 
+> **Status:** ⏳ **Next Development Phase**
+> **Milestone Goal:** Build a robust, modular, and fully tested FastAPI backend foundation implementing core application architecture patterns.
+
 **Objective:** Learn how to build a proper backend using Python and FastAPI.
 
-|  Task   | What you will learn/build                            |
-| :-----: | :--------------------------------------------------- |
-| **1.1** | Python fundamentals required for backend engineering |
-| **1.2** | Python project structure and modular architecture    |
-| **1.3** | FastAPI application and routing                      |
-| **1.4** | REST API design and HTTP fundamentals                |
-| **1.5** | Pydantic models and data validation                  |
-| **1.6** | Dependency injection                                 |
-| **1.7** | Async programming and error handling                 |
-| **1.8** | Logging and configuration management                 |
-| **1.9** | Unit testing using pytest                            |
+|  Task   | What you will learn/build                            | Status |
+| :-----: | :--------------------------------------------------- | :----: |
+| **1.1** | Python fundamentals required for backend engineering | ⏳ Next |
+| **1.2** | Python project structure and modular architecture    | ⏳ Next |
+| **1.3** | FastAPI application and routing                      | ⏳ Next |
+| **1.4** | REST API design and HTTP fundamentals                | ⏳ Next |
+| **1.5** | Pydantic models and data validation                  | ⏳ Next |
+| **1.6** | Dependency injection                                 | ⏳ Next |
+| **1.7** | Async programming and error handling                 | ⏳ Next |
+| **1.8** | Logging and configuration management                 | ⏳ Next |
+| **1.9** | Unit testing using pytest                            | ⏳ Next |
 
 **Deliverable:** A functional FastAPI backend with validated endpoints.
 
@@ -450,11 +485,11 @@ We can use this as our master roadmap throughout development.
 
 ### LegalLens AI progress
 
-**`[░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]` 0%**  
-_0 of 13 phases completed_
+**`[██░░░░░░░░░░░░░░░░░░░░░░░░░░░░]` 8%**
+*1 of 13 phases completed*
 
-- [ ] **Phase 0:** Project Foundation
-- [ ] **Phase 1:** Backend Engineering Fundamentals
+- [x] **Phase 0:** Project Foundation *(Completed - 1 November 2026)*
+- [ ] **Phase 1:** Backend Engineering Fundamentals *(Next Up)*
 - [ ] **Phase 2:** LLM Engineering
 - [ ] **Phase 3:** Database & Document Intelligence
 - [ ] **Phase 4:** Embeddings & Basic RAG
@@ -467,23 +502,25 @@ _0 of 13 phases completed_
 - [ ] **Phase 11:** Production Engineering
 - [ ] **Phase 12:** Evaluation & Release
 
-_(Reset progress)_
+*(Reset progress)*
 
 ---
 
 ## 6. A Few Important Engineering Decisions
 
-I want us to maintain these boundaries throughout the project:
+I want us to maintain these boundaries throughout the project, as formalized in our [Architecture Decision Records](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md) (ADR-001 through ADR-014):
 
-1. **Don't over-engineer:** One modular FastAPI backend, not separate microservices.
-2. **Deterministic first:** Database operations, access control, reference validation, ranking and report rendering should use normal code.
-3. **LLM only where needed:** Use Gemini for language understanding and legal analysis, not every operation.
-4. **Evidence is mandatory:** A legal claim without traceable supporting evidence must not silently appear as verified.
-5. **Test before adding complexity:** Evaluate basic RAG before adding reranking or advanced agent workflows.
-6. **Security from day one:** Retrieved documents are untrusted input; LLM prompts are not security boundaries.
-7. **Measure everything:** Retrieval quality, verification accuracy, latency, token usage and cost.
+1. **Modular Monolithic Backend ([ADR-001](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-001-use-a-modular-monolithic-backend)):** One unified, modular FastAPI backend in Python. The previously considered .NET + FastAPI dual-backend split was formally evaluated and rejected to eliminate cross-runtime overhead, serialization latency, and redundant data models.
+2. **Deterministic First ([ADR-009](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-009-keep-critical-operations-deterministic)):** Database operations, permissions, reference existence checks, search ranking, and report rendering use conventional Python code. LLMs are reserved for language understanding and semantic reasoning.
+3. **Evidence Traceability is Mandatory:** A legal claim without traceable supporting evidence must never silently appear as verified. All claims must map to explicit source passages with clear authenticity classifications (`VerifiedOfficial`, `VerifiedSecondary`, `SyntheticDemo`, `Unverified`).
+4. **Hybrid Retrieval with Deterministic Fallback ([ADR-004](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-004-use-hybrid-retrieval--postgresql-full-text-search-and-pgvector), [ADR-007](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-007-use-a-hosted-embedding-api)):** Combine PostgreSQL Full-Text Search (lexical) with pgvector (semantic) using Reciprocal Rank Fusion. Hosted embeddings replace resource-intensive local BGE-M3 models, with PostgreSQL FTS serving as an immediate deterministic fallback.
+5. **Direct Internal Execution vs External Interoperability ([ADR-008](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-008-use-mcp-for-external-tool-interoperability)):** Internal workflow nodes directly invoke Python modules. The Python MCP SDK is reserved exclusively for exposing approved legal research tools to external AI clients.
+6. **Controlled Orchestration ([ADR-006](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-006-use-langgraph-for-controlled-investigation-orchestration)):** LangGraph coordinates a stateful, bounded, and inspectable investigation lifecycle. Unrestricted autonomous agents are strictly out of scope.
+7. **Security from Day One ([ADR-014](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation)):** Retrieved documents and user uploads are treated as untrusted input. LLM prompts are never treated as security boundaries. Credentials and secrets are strictly isolated from the public GitHub repository.
+8. **Test Before Adding Complexity:** Evaluate basic semantic RAG before introducing rerankers, multi-step agent graphs, or advanced query transformations. Native-text PDF parsing ([ADR-010](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-010-use-native-text-pdf-extraction-initially)) is prioritized; OCR is deferred.
+9. **Measure Everything:** Systematically measure and benchmark retrieval quality (Precision@K, Recall@K, MRR), citation verification accuracy, workflow reliability, latency, token usage, and cost per investigation.
 
-These principles follow the architecture and engineering constraints in your proposal.
+These principles follow the architecture, ADRs, and engineering constraints in your proposal.
 
 ---
 

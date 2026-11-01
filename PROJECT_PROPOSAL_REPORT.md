@@ -14,8 +14,9 @@
 | **Initial Legal Domain** | Employment Law |
 | **Proposed Duration** | 12 Weeks |
 | **Estimated Development Effort** | 240 Hours |
-| **Document Version** | 2.0 |
+| **Document Version** | 2.1 |
 | **Date** | 1 November 2026 |
+| **Current Status** | Phase 0 (Foundation) Completed; Phase 1 Pending |
 
 ---
 
@@ -58,6 +59,9 @@ The expected outcome is a working web-based prototype that demonstrates how AI e
 17. [Cost Optimisation Strategy](#17-cost-optimisation-strategy)
 18. [Testing and Evaluation Strategy](#18-testing-and-evaluation-strategy)
 19. [Project Methodology and Development Timeline](#19-project-methodology-and-development-timeline)
+    * [19.1 Development Principles](#191-development-principles)
+    * [19.2 Project Foundation Status (Phase 0 Completion)](#192-project-foundation-status-phase-0-completion)
+    * [19.3 Documented Architectural Deviations and Refinements](#193-documented-architectural-deviations-and-refinements)
 20. [Expected Deliverables](#20-expected-deliverables)
 21. [Risks and Mitigation Strategies](#21-risks-and-mitigation-strategies)
 22. [Limitations and Future Enhancements](#22-limitations-and-future-enhancements)
@@ -186,7 +190,7 @@ The initial system will include:
 
 ### 5.3 Initial Development Constraints
 To keep the project achievable within the available development time and hardware constraints:
-1. The initial version will use a single Python/FastAPI backend instead of maintaining separate .NET and Python application backends.
+1. The initial version will use a single modular Python/FastAPI backend (standardized on Python 3.12.10). The previously explored architecture involving separate .NET and Python application backends was formally evaluated and rejected in Phase 0 (ADR-001) to eliminate cross-runtime serialization latency, redundant data modeling, and unnecessary integration overhead.
 2. Local BGE-M3 embeddings will not be used.
 3. A hosted embedding API will be evaluated for semantic retrieval.
 4. PostgreSQL full-text search will provide a fallback retrieval mode if hosted embeddings are unavailable or unsuitable.
@@ -385,13 +389,13 @@ The report renderer will use deterministic Python templates. It will format vali
 ### 9.1 Architectural Overview
 LegalLens AI will use a modular architecture with four logical layers.
 
-1. **Application Layer**  
+1. **Application Layer**
    Responsible for user interaction, authentication, document management, research projects and report presentation.
-2. **Agent Orchestration Layer**  
+2. **Agent Orchestration Layer**
    Responsible for research planning, workflow execution, state management and controlled coordination of AI tasks.
-3. **Legal Intelligence Layer**  
+3. **Legal Intelligence Layer**
    Responsible for document processing, hybrid retrieval, evidence management, legal analysis and citation verification.
-4. **Harness and Governance Layer**  
+4. **Harness and Governance Layer**
    Responsible for execution policies, permissions, output validation, resource limits, observability, testing and recovery.
 
 These are logical architecture boundaries. They do not need to become separate microservices.
@@ -464,19 +468,19 @@ These are logical architecture boundaries. They do not need to become separate m
 
 ### 9.3 Architecture Decisions
 
-**Single Python backend**  
-FastAPI will initially handle application APIs and AI workflows. This avoids the additional integration and maintenance overhead of operating separate .NET and Python backends.
+**Single Python backend**
+FastAPI handles application APIs, domain services, and AI workflow coordination within a single modular Python backend (standardized on Python 3.12.10). The previously considered alternative of maintaining separate .NET and Python backends was formally evaluated and rejected in Phase 0 (ADR-001) to eliminate cross-runtime serialization latency, dual deployment pipelines, and redundant data models.
 
-**LangGraph for orchestration**  
+**LangGraph for orchestration**
 LangGraph will coordinate the investigation lifecycle and conditional execution. Retrieval and verification functions will be called directly from Python modules rather than unnecessarily routing internal database operations through MCP.
 
-**MCP for interoperability**  
+**MCP for interoperability**
 The MCP server will expose selected legal research functions to external AI clients. It will reuse the same application logic as the internal workflow.
 
-**Deterministic-first processing**  
+**Deterministic-first processing**
 Database access, reference validation, ranking, permissions and report formatting will be handled through normal application code wherever possible. LLM calls will be reserved for tasks requiring language understanding or semantic reasoning.
 
-**Hosted embeddings**  
+**Hosted embeddings**
 The system will use a hosted embedding service instead of local BGE-M3. The selected provider will be evaluated based on language quality, price, quotas, privacy requirements and integration support.
 
 If hosted embeddings are unsuitable, the system will retain a PostgreSQL full-text-search mode while the embedding approach is evaluated.
@@ -621,13 +625,13 @@ External embedding services receive the text submitted for embedding. Therefore,
 ### 11.4 Hybrid Retrieval
 The retrieval pipeline will combine two approaches.
 
-**Keyword retrieval**  
+**Keyword retrieval**
 PostgreSQL full-text search will identify passages containing relevant legal terminology and exact expressions.
 
-**Semantic retrieval**  
+**Semantic retrieval**
 pgvector will identify passages that are semantically related to the research question.
 
-**Result fusion**  
+**Result fusion**
 Reciprocal Rank Fusion (RRF) will combine the ranked results.
 
 $$
@@ -769,7 +773,7 @@ The objective is to make the codebase understandable, testable and maintainable 
 | :--- | :--- | :--- |
 | **Frontend** | React + TypeScript | User interface |
 | **Styling** | Tailwind CSS | Interface styling |
-| **Backend** | Python + FastAPI | Application APIs and backend logic |
+| **Backend** | Python 3.12.10 + FastAPI | Application APIs and backend logic |
 | **Data validation** | Pydantic | Structured request and model output validation |
 | **LLM** | Gemini API | Language understanding and legal analysis |
 | **Workflow orchestration** | LangGraph | Controlled investigation workflow |
@@ -1030,35 +1034,72 @@ The project will follow these principles:
 * Keep the architecture modular without prematurely creating microservices.
 * Maintain a working end-to-end application throughout development.
 
+### 19.2 Project Foundation Status (Phase 0 Completion)
+
+As of 1 November 2026, **Phase 0 — Project Foundation** has been formally completed. The following foundational work was implemented, reviewed, and validated across eight structured tasks:
+
+| Task | Title | Status | Execution Summary |
+| :---: | :--- | :---: | :--- |
+| **0.1** | **Finalize MVP Scope** | Completed | Finalized Complete Functional MVP requirements (FR-01 to FR-20, NFRs); established Sri Lankan Employment Law corpus boundaries; defined 4 source classifications (`VerifiedOfficial`, `VerifiedSecondary`, `SyntheticDemo`, `Unverified`) and 5 claim verification outcomes (`Supported`, `Partially supported`, `Unsupported`, `Contradicted`, `Ambiguous`); confirmed knowledge graph deferral. |
+| **0.2** | **Finalize System Architecture** | Completed | Consolidated architecture into a single modular Python FastAPI backend, formally rejecting the earlier .NET + FastAPI split (ADR-001); established 4 logical layers; mapped the 7-stage investigation sequence; defined direct internal module execution vs external Python MCP SDK integration. |
+| **0.3** | **Create GitHub Repository** | Completed | Configured public GitHub repository at [`https://github.com/Shakir5665/LegalLens-AI`](https://github.com/Shakir5665/LegalLens-AI) on branch `main`. Public visibility established with strict credential isolation policies. |
+| **0.4** | **Establish Project Structure** | Completed | Created root monorepo directory layout (`apps/web/`, `apps/api/`, `docs/`, `infrastructure/`, `tests/`) and backend modular package structure (`apps/api/app/` containing `api/`, `core/`, `db/`, `schemas/`, and `services/`) with baseline `/health` entrypoint. |
+| **0.5** | **Configure Python Environment** | Completed | Standardized on Python 3.12 (specifically Python 3.12.10) managed via dedicated root virtual environment `venv/` (distinguished from system Python 3.14.3). Verified activation via `.\venv\Scripts\Activate.ps1`. |
+| **0.6** | **Configure Environment Variables** | Completed | Created `apps/api/.env.example` template and local `apps/api/.env` with sanitized placeholders for application settings, database URL, Gemini API key, and CORS origins. Verified zero secret leakage. |
+| **0.7** | **Configure Git Workflow and .gitignore** | Completed | Configured root `.gitignore` rules strictly excluding `.env*`, `venv/`, Python bytecode caches, pytest/coverage artifacts, build outputs, and `node_modules/`. |
+| **0.8** | **Create Initial Documentation** | Completed | Documented and published `README.md`, `docs/architecture/system-architecture.md`, and `docs/decisions/architecture-decisions.md` (ADR-001 through ADR-014). |
+
+> [!NOTE]
+> **Implementation Boundary:** Phase 0 establishes the engineering environment and repository foundation only. All core application components—including database persistence, vector embeddings, hybrid retrieval, LangGraph workflows, Gemini LLM calls, claim verification, and frontend UI—are planned target designs and are **not yet implemented**. Implementation begins in Phase 1 (Backend Engineering Fundamentals).
+
+### 19.3 Documented Architectural Deviations and Refinements
+
+During Phase 0, several early design concepts were refined to ensure development feasibility, operational reliability, and architectural discipline:
+
+1. **Consolidated Modular Monolith (ADR-001):**
+   The initial concept of splitting the backend into a .NET application API and a secondary Python AI service was formally rejected. A single modular Python FastAPI backend was chosen to eliminate cross-language serialization latency, redundant data schemas, and dual runtime maintenance.
+2. **Runtime Version Standardization (ADR-013):**
+   Python 3.12.10 was explicitly selected and isolated within `venv/`, avoiding compatibility pitfalls with experimental or non-LTS interpreters (such as host Python 3.14.3) while ensuring complete binary wheel compatibility for FastAPI, Pydantic v2, and pgvector.
+3. **Hosted Embedding Service (ADR-007):**
+   Local inference of BGE-M3 was ruled out due to local workstation hardware constraints. A hosted embedding API was selected for semantic retrieval, with PostgreSQL Full-Text Search serving as an immediate deterministic fallback.
+4. **Knowledge Graph Deferral:**
+   A legal knowledge graph was evaluated and confirmed as a post-MVP enhancement. The MVP focuses on robust hybrid retrieval (FTS + pgvector) and claim-level evidence verification.
+5. **Native-Text PDF Prioritization (ADR-010):**
+   Native-text extraction via PyMuPDF was prioritized. OCR for scanned documents was explicitly deferred to later phases once core retrieval and verification mechanisms are validated.
+6. **Internal Execution vs. External MCP (ADR-008):**
+   Internal workflow nodes will invoke Python retrieval and verification functions directly, reserving the Python MCP SDK exclusively for exposing approved tools to external AI clients.
+7. **Public Repository Security Boundary (ADR-014):**
+   Public GitHub visibility was explicitly approved, accompanied by defense-in-depth `.gitignore` rules and strict environment template management to prevent credential exposure.
+
 ---
 
 ## 20. Expected Deliverables
 
 At the end of the project, the expected deliverables are:
 
-* **D1 — Web Application**  
+* **D1 — Web Application**
   A React-based legal research interface with authentication, research projects, document management and investigation results.
-* **D2 — Legal Knowledge Base**  
+* **D2 — Legal Knowledge Base**
   A curated collection of Sri Lankan employment legislation, selected judicial decisions and legal reference documents with structured metadata.
-* **D3 — Document Processing Pipeline**  
+* **D3 — Document Processing Pipeline**
   A native-text PDF ingestion and indexing pipeline that preserves available source locations.
-* **D4 — Hybrid RAG Pipeline**  
+* **D4 — Hybrid RAG Pipeline**
   A retrieval system combining PostgreSQL full-text search, semantic retrieval and ranking.
-* **D5 — Agentic Investigation Workflow**  
+* **D5 — Agentic Investigation Workflow**
   A controlled LangGraph workflow for research planning, evidence retrieval and legal analysis.
-* **D6 — Citation Verification Engine**  
+* **D6 — Citation Verification Engine**
   A claim-level verification system that validates references and evaluates evidence support.
-* **D7 — Case Comparison Module**  
+* **D7 — Case Comparison Module**
   A structured comparison capability for selected judicial decisions.
-* **D8 — MCP Integration**  
+* **D8 — MCP Integration**
   A controlled MCP interface exposing selected legal research tools to external clients.
-* **D9 — Harness Engineering Implementation**  
+* **D9 — Harness Engineering Implementation**
   Runtime controls, permissions, execution budgets, validation, observability and recovery mechanisms.
-* **D10 — Evaluation Dataset and Results**  
+* **D10 — Evaluation Dataset and Results**
   A manually reviewed test dataset and documented retrieval, verification, reliability and cost measurements.
-* **D11 — Research Report Generation**  
+* **D11 — Research Report Generation**
   A structured report generation and PDF export capability.
-* **D12 — Technical Documentation**  
+* **D12 — Technical Documentation**
   Project README, architecture documentation, API documentation, setup instructions, evaluation methodology and design decisions.
 
 ---

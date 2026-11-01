@@ -1,7 +1,7 @@
 # LegalLens AI — Architecture Decision Records
 
-**Project:** LegalLens AI  
-**Status:** Accepted for MVP architecture  
+**Project:** LegalLens AI
+**Status:** Accepted for MVP architecture
 **Last Updated:** 1 November 2026
 
 This document records the major architectural and technology decisions for LegalLens AI. These decisions establish the technical direction for the initial MVP and should be revisited only when implementation evidence, evaluation results, or genuine project requirements justify a change.
@@ -14,24 +14,25 @@ This document records the major architectural and technology decisions for Legal
 
 **Decision**
 
-Use one Python backend built with FastAPI. Organize the backend into clearly separated modules rather than deploying separate microservices.
+Use one unified Python backend built with FastAPI. Organize the backend into clearly separated modules rather than maintaining separate microservices or splitting responsibilities across different backend languages. Specifically, the previously considered split between a .NET application backend and a Python AI service is formally rejected in favor of a single modular Python FastAPI backend.
 
 **Context**
 
-LegalLens AI requires API handling, authentication, document processing, legal retrieval, AI orchestration, citation verification, and report generation. These capabilities need clear boundaries, but the initial MVP does not require independently deployed services.
+LegalLens AI requires API handling, authentication, document processing, legal retrieval, AI orchestration, citation verification, and report generation. Early architectural explorations considered separating core web APIs into a .NET backend and offloading AI/RAG tasks to a secondary Python service. However, running two disparate runtimes introduces unnecessary integration overhead, cross-boundary serialization latency, dual deployment pipelines, and redundant data models for the initial MVP.
 
 **Rationale**
 
-- Reduces deployment and infrastructure complexity.
-- Makes local development and debugging easier.
-- Allows modules to communicate directly through Python interfaces.
-- Keeps the architecture manageable for the initial development scope.
+- Reduces deployment and infrastructure complexity to a single runtime environment.
+- Eliminates cross-language serialization and communication overhead.
+- Simplifies local development, debugging, and continuous integration.
+- Allows AI orchestration (LangGraph), data validation (Pydantic), and database operations to communicate directly through native Python interfaces.
+- Keeps the architecture manageable for the initial 12-week development scope without prematurely introducing distributed systems complexity.
 
 **Consequences**
 
-- Modules must maintain clear responsibilities and interfaces.
-- The backend is deployed as one application.
-- Separate services may be considered later only if measurable requirements justify them.
+- Modules within `apps/api/app/` (`api`, `core`, `db`, `schemas`, `services`) must maintain rigorous domain boundaries and explicit interfaces.
+- The backend is deployed and scaled as one cohesive unit.
+- Separate microservices or secondary runtimes may be re-evaluated post-MVP only if concrete, measurable performance or organisational requirements emerge.
 
 ---
 
@@ -346,6 +347,57 @@ The project requires a reproducible environment for development and deployment.
 
 ---
 
+## ADR-013: Select Python 3.12 as the Core Backend Runtime
+
+**Status:** Accepted
+
+**Decision**
+
+Standardize on Python 3.12 (specifically Python 3.12.10) for all backend development, environment management, and dependency execution via a dedicated root virtual environment (`venv/`).
+
+**Context**
+
+The development workstation contains multiple Python versions (including system-level Python 3.14.3). Core dependencies for LegalLens AI—including FastAPI, Pydantic v2, LangGraph, SQLAlchemy, and psycopg/pgvector—require stable ecosystem support and binary wheel availability.
+
+**Rationale**
+
+- Python 3.12 offers proven runtime performance improvements, enhanced error reporting, and robust typing syntax.
+- Cutting-edge or non-LTS releases (e.g., Python 3.14) encounter compatibility and binary wheel installation issues with machine learning and scientific packages.
+- A project-local virtual environment (`venv/`) isolates dependencies from global interpreter states.
+
+**Consequences**
+
+- All backend commands, tests, and scripts must execute within the activated virtual environment (`.\venv\Scripts\Activate.ps1`).
+- The Python version must be verified (`python --version` confirming 3.12.x).
+- Python 3.14 or unapproved interpreter versions must not be used for backend dependency installation.
+
+---
+
+## ADR-014: Maintain Public Repository with Strict Credential Isolation
+
+**Status:** Accepted
+
+**Decision**
+
+Maintain the project in a public GitHub repository (`https://github.com/Shakir5665/LegalLens-AI`) while enforcing an uncompromising zero-leakage security boundary for credentials, secrets, and environment configurations.
+
+**Context**
+
+LegalLens AI is designed to demonstrate professional AI engineering and legal technology practices publicly. However, backend operations connect to external cloud services (Neon PostgreSQL, Google Gemini API).
+
+**Rationale**
+
+- Public repository visibility enables transparent verification, open portfolio demonstration, and peer review.
+- Security cannot rely on repository privacy; defense-in-depth credential management must be enforced from Day 1.
+
+**Consequences**
+
+- The root `.gitignore` strictly ignores `.env` and all `.env.*` variants, permitting only `.env.example`.
+- Secrets, database passwords, and API keys must never be committed to git, recorded in documentation, or logged at runtime.
+- Pre-commit reviews and CI verification must ensure local placeholder configurations remain completely decoupled from public version control.
+
+---
+
 ## General Decision Principles
 
 All future technical decisions should follow these principles:
@@ -358,8 +410,13 @@ All future technical decisions should follow these principles:
 6. **Controlled orchestration:** Keep AI investigation workflows bounded, inspectable, and testable.
 7. **Scope discipline:** Do not introduce deferred features into the MVP without a documented reason.
 
+---
+
 ## Implementation Status
 
-These records document the accepted MVP architecture. They do not imply that every technology or capability has already been implemented or tested.
-
-Implementation status must be updated only after the relevant functionality has been developed and verified.
+* **Phase 0 — Project Foundation:** **COMPLETED** (1 November 2026)
+  * ADR-001 through ADR-014 have been formally reviewed, accepted, and recorded.
+  * Baseline monorepo structure, Python 3.12.10 virtual environment, environment variable templates, root `.gitignore`, and documentation assets are fully established.
+* **Phase 1 through Phase 12:** **PLANNED**
+  * Core application features—including database persistence, vector indexing, hybrid retrieval, LangGraph investigation workflows, citation verification, and React frontend—are documented target designs and are not yet implemented.
+  * Implementation work commences sequentially with Phase 1 (Backend Engineering Fundamentals).

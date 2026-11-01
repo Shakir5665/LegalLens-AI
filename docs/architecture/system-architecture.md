@@ -216,6 +216,18 @@ Expected report sections include:
 
 ## 11. Current Implementation Status
 
-This document describes the agreed target architecture.
+### 11.1 Phase 0 Foundation — Completed
 
-At the Project Foundation stage, the repository structure and initial configuration are being established. The architecture components described here are planned capabilities and should not be considered implemented until they are developed and verified.
+As of 1 November 2026, **Phase 0 — Project Foundation** is fully completed:
+
+* **Repository Architecture:** Monorepo directory hierarchy established (`apps/web/`, `apps/api/`, `docs/`, `infrastructure/`, `tests/`).
+* **Backend Skeleton:** Modular package structure established in `apps/api/app/` (`api/`, `core/`, `db/`, `schemas/`, `services/`) with a baseline health check endpoint (`/health`) in `main.py`.
+* **Runtime Standard:** Standardized on Python 3.12 (specifically Python 3.12.10) managed within a dedicated root virtual environment (`venv/`). Activation confirmed via `.\venv\Scripts\Activate.ps1`.
+* **Security & Environment:** Root `.gitignore` configured to prevent secret and dependency leakage. Environment template (`apps/api/.env.example`) and local placeholder configuration (`apps/api/.env`) established.
+* **Architectural Baseline:** System architecture and Architecture Decision Records (ADR-001 through ADR-014) formally documented.
+
+### 11.2 Implementation Boundary
+
+The four logical layers (Application, Agent Orchestration, Legal Intelligence, Harness and Governance), database persistence (PostgreSQL/pgvector), hybrid retrieval (FTS + vector search), LangGraph investigation workflows, citation and evidence verification engines, and React frontend user interfaces described in this document represent the **agreed target architecture**.
+
+These application modules are **not yet implemented**. They will be systematically engineered, tested, and evaluated phase-by-phase according to the development roadmap, beginning with **Phase 1: Backend Engineering Fundamentals**.
