@@ -6,9 +6,9 @@
 ---
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Phase%200%20Completed-success?style=for-the-badge&logo=checkmarx" alt="Status" />
-  <img src="https://img.shields.io/badge/Next%20Phase-Phase%201%20Backend-blue?style=for-the-badge&logo=fastapi" alt="Next Phase" />
-  <img src="https://img.shields.io/badge/Progress-1%20of%2013%20Phases%20(8%25)-blueviolet?style=for-the-badge" alt="Progress" />
+  <img src="https://img.shields.io/badge/Status-Phase%201%20Completed-success?style=for-the-badge&logo=checkmarx" alt="Status" />
+  <img src="https://img.shields.io/badge/Next%20Phase-Phase%202%20LLM%20Engineering-blue?style=for-the-badge&logo=google" alt="Next Phase" />
+  <img src="https://img.shields.io/badge/Progress-2%20of%2013%20Phases%20(15%25)-blueviolet?style=for-the-badge" alt="Progress" />
   <img src="https://img.shields.io/badge/Python-3.12.10-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Version" />
   <img src="https://img.shields.io/badge/Duration-12%20Weeks-blue?style=for-the-badge&logo=calendar" alt="Duration" />
   <img src="https://img.shields.io/badge/Effort-240%20Hours-indigo?style=for-the-badge&logo=clock" alt="Effort" />
@@ -28,11 +28,11 @@ I recommend following a 12-week, 240-hour development roadmap, based on your pro
 
 | Metric | Status | Details |
 | :--- | :--- | :--- |
-| **Current Milestone** | **Phase 0 — Project Foundation** | **Completed** (1 November 2026) |
-| **Next Milestone** | **Phase 1 — Backend Engineering Fundamentals** | Pending implementation (Tasks 1.1–1.9) |
-| **Overall Progress** | **8%** | 1 of 13 development phases completed |
+| **Current Milestone** | **Phase 1 — Backend Engineering Fundamentals** | **Completed** (2 November 2026) |
+| **Next Milestone** | **Phase 2 — LLM Engineering** | Pending implementation (Tasks 2.1–2.8) |
+| **Overall Progress** | **15%** | 2 of 13 development phases completed |
 | **Repository Baseline** | Stable | Public Monorepo on `main` ([github.com/Shakir5665/LegalLens-AI](https://github.com/Shakir5665/LegalLens-AI)) |
-| **Backend Runtime** | Configured | Python 3.12.10 in root `venv/` with baseline health check |
+| **Backend Runtime** | Operational | Python 3.12.10, FastAPI, Pydantic v2, Pytest suite (22/22 passing) |
 
 > [!NOTE]
 > **Implementation Boundary:** Phase 0 established the development environment, monorepo directory skeleton, security rules, environment templates, and architectural decision records. **All core application capabilities** (PostgreSQL/pgvector storage, hybrid retrieval pipelines, LangGraph investigation workflows, Gemini LLM calls, claim verification engine, and React frontend) **remain unimplemented target architecture** to be developed progressively starting in Phase 1.
@@ -140,24 +140,38 @@ This is the more important part. I want you to understand the actual engineering
 
 ### Phase 1 — Backend Engineering Fundamentals
 
-> **Status:** ⏳ **Next Development Phase**
+> **Status:** ✅ **Completed** (2 November 2026)
 > **Milestone Goal:** Build a robust, modular, and fully tested FastAPI backend foundation implementing core application architecture patterns.
 
 **Objective:** Learn how to build a proper backend using Python and FastAPI.
 
 |  Task   | What you will learn/build                            | Status |
 | :-----: | :--------------------------------------------------- | :----: |
-| **1.1** | Python fundamentals required for backend engineering | ⏳ Next |
-| **1.2** | Python project structure and modular architecture    | ⏳ Next |
-| **1.3** | FastAPI application and routing                      | ⏳ Next |
-| **1.4** | REST API design and HTTP fundamentals                | ⏳ Next |
-| **1.5** | Pydantic models and data validation                  | ⏳ Next |
-| **1.6** | Dependency injection                                 | ⏳ Next |
-| **1.7** | Async programming and error handling                 | ⏳ Next |
-| **1.8** | Logging and configuration management                 | ⏳ Next |
-| **1.9** | Unit testing using pytest                            | ⏳ Next |
+| **1.1** | Python fundamentals required for backend engineering | ✅ Completed |
+| **1.2** | Python project structure and modular architecture    | ✅ Completed |
+| **1.3** | FastAPI application and routing                      | ✅ Completed |
+| **1.4** | REST API design and HTTP fundamentals                | ✅ Completed |
+| **1.5** | Pydantic models and data validation                  | ✅ Completed |
+| **1.6** | Dependency injection                                 | ✅ Completed |
+| **1.7** | Async programming and error handling                 | ✅ Completed |
+| **1.8** | Logging and configuration management                 | ✅ Completed |
+| **1.9** | Unit testing using pytest                            | ✅ Completed |
 
 **Deliverable:** A functional FastAPI backend with validated endpoints.
+
+#### Phase 1 Verified Execution & Task Completion Summary
+
+| Task | Title | Verified Execution & Completion Details |
+| :---: | :--- | :--- |
+| **1.1** | **Python Fundamentals** | Standardized on Python 3.12.10 in root `venv/`, establishing type annotations, protocols, immutable Pydantic models, and clean OOP separation. |
+| **1.2** | **Project Structure & Architecture** | Implemented modular architecture in `apps/api/app/` separating `core/` (config, logging, errors), `schemas/` (Pydantic models), `services/` (domain logic), and `api/` (routes & dependencies). |
+| **1.3** | **FastAPI Application & Routing** | Configured `main.py` mounting unversioned `/health` and versioned `/api/v1` routes with OpenAPI documentation at `/docs` and `/redoc`. |
+| **1.4** | **REST API Design** | Implemented representative endpoints (`GET /health`, `GET /api/v1/health`, `GET /api/v1/sources`, `GET /api/v1/sources/{source_id}`, `POST /api/v1/sources/validate-reference`) following standard HTTP methods, status codes, and resource naming. |
+| **1.5** | **Pydantic Validation** | Built typed request and response schemas in `app/schemas/` with boundary constraints, regex slug patterns, year ranges, and enums (`SourceAuthenticity`, `LegalSourceCategory`). |
+| **1.6** | **Dependency Injection** | Implemented reusable dependencies in `app/api/deps.py` for application settings, domain service instances, and client correlation IDs. Verified override capability in tests. |
+| **1.7** | **Async & Error Handling** | Implemented custom application exceptions (`AppException`, `EntityNotFoundException`, `ValidationException`) and uniform `ErrorResponse` schema. Middleware masks unhandled 500 tracebacks. |
+| **1.8** | **Logging & Configuration** | Implemented centralized `Settings` using `pydantic-settings` cached via `@lru_cache`, and structured Python logging with standard formatters. |
+| **1.9** | **Automated Testing** | Developed a 22-test automated test suite using `pytest` and `httpx` in `apps/api/tests/` covering configuration, dependencies, schemas, error handling, and API endpoints (100% passing). |
 
 ---
 
@@ -485,12 +499,12 @@ We can use this as our master roadmap throughout development.
 
 ### LegalLens AI progress
 
-**`[██░░░░░░░░░░░░░░░░░░░░░░░░░░░░]` 8%**
-*1 of 13 phases completed*
+**`[████░░░░░░░░░░░░░░░░░░░░░░░░]` 15%**
+*2 of 13 phases completed*
 
 - [x] **Phase 0:** Project Foundation *(Completed - 1 November 2026)*
-- [ ] **Phase 1:** Backend Engineering Fundamentals *(Next Up)*
-- [ ] **Phase 2:** LLM Engineering
+- [x] **Phase 1:** Backend Engineering Fundamentals *(Completed - 2 November 2026)*
+- [ ] **Phase 2:** LLM Engineering *(Next Up)*
 - [ ] **Phase 3:** Database & Document Intelligence
 - [ ] **Phase 4:** Embeddings & Basic RAG
 - [ ] **Phase 5:** Hybrid Retrieval Engineering
@@ -614,6 +628,22 @@ python --version
 
 The expected version is `Python 3.12.x`.
 
+### Running the Application
+
+From repository root:
+
+```powershell
+.\venv\Scripts\uvicorn.exe app.main:app --app-dir apps/api --reload --port 8000
+```
+
+### Running Tests
+
+From repository root:
+
+```powershell
+.\venv\Scripts\python.exe -m pytest -v
+```
+
 ### Environment Variables
 
 The backend environment-variable template is located at:
@@ -634,6 +664,7 @@ Create a local `.env` file in `apps/api/` using that template when configuring t
 | [`PROJECT_PROPOSAL_REPORT.md`](file:///C:/Users/shaki/Desktop/LegalLense/PROJECT_PROPOSAL_REPORT.md) | Project proposal, objectives, scope, requirements, and evaluation strategy. |
 | [`README.md`](file:///C:/Users/shaki/Desktop/LegalLense/README.md) | Project overview, architecture summary, setup guidance, and development roadmap. |
 | [`docs/architecture/system-architecture.md`](file:///C:/Users/shaki/Desktop/LegalLense/docs/architecture/system-architecture.md) | Detailed system architecture and investigation workflow. |
+| [`docs/architecture/backend-architecture.md`](file:///C:/Users/shaki/Desktop/LegalLense/docs/architecture/backend-architecture.md) | Phase 1 backend architecture, request lifecycle, endpoints, and testing guide. |
 | [`docs/decisions/architecture-decisions.md`](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md) | Accepted architecture and technology decisions. |
 
 ---
