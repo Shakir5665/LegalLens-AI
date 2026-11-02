@@ -15,8 +15,8 @@
 | **Proposed Duration** | 12 Weeks |
 | **Estimated Development Effort** | 240 Hours |
 | **Document Version** | 2.1 |
-| **Date** | 1 November 2026 |
-| **Current Status** | Phase 0 (Foundation) Completed; Phase 1 Pending |
+| **Date** | 3 November 2026 |
+| **Current Status** | Phase 0, Phase 1 & Phase 2 Completed; Phase 3 (Database & Document Intelligence) Next |
 
 ---
 
@@ -61,7 +61,9 @@ The expected outcome is a working web-based prototype that demonstrates how AI e
 19. [Project Methodology and Development Timeline](#19-project-methodology-and-development-timeline)
     * [19.1 Development Principles](#191-development-principles)
     * [19.2 Project Foundation Status (Phase 0 Completion)](#192-project-foundation-status-phase-0-completion)
-    * [19.3 Documented Architectural Deviations and Refinements](#193-documented-architectural-deviations-and-refinements)
+    * [19.3 Backend Engineering Fundamentals Status (Phase 1 Completion)](#193-backend-engineering-fundamentals-status-phase-1-completion)
+    * [19.4 LLM Engineering Status (Phase 2 Completion)](#194-llm-engineering-status-phase-2-completion)
+    * [19.5 Documented Architectural Deviations and Refinements](#195-documented-architectural-deviations-and-refinements)
 20. [Expected Deliverables](#20-expected-deliverables)
 21. [Risks and Mitigation Strategies](#21-risks-and-mitigation-strategies)
 22. [Limitations and Future Enhancements](#22-limitations-and-future-enhancements)
@@ -1008,20 +1010,20 @@ The project will follow an iterative development methodology. Each phase will pr
 
 **Estimated commitment:** 20 hours per week for 12 weeks, approximately 240 development hours.
 
-| Week | Main focus | Expected deliverable |
-| :---: | :--- | :--- |
-| **1** | Python, FastAPI, Pydantic, environment setup and API fundamentals | Working backend foundation |
-| **2** | Gemini API integration, structured outputs and error handling | Validated LLM integration |
-| **3** | PostgreSQL, document storage and native PDF extraction | Document ingestion pipeline |
-| **4** | Hosted embeddings, pgvector and basic RAG | Initial semantic retrieval |
-| **5** | PostgreSQL full-text search and hybrid retrieval | Hybrid search pipeline |
-| **6** | RRF, reranking, source metadata and retrieval evaluation | Evaluated retrieval component |
-| **7** | LangGraph, research planning and workflow state | Controlled investigation workflow |
-| **8** | Legal analysis, claim extraction, verification and guardrails | Evidence-grounded analysis |
-| **9** | Case comparison, MCP integration and harness observability | Extended research capabilities |
-| **10** | React integration, investigation workspace and SSE | Integrated web application |
-| **11** | Report export, security, cost optimisation and deployment | Deployable prototype |
-| **12** | Evaluation, documentation, portfolio preparation and demonstration | Final project release |
+| Week | Main focus | Expected deliverable | Status |
+| :---: | :--- | :--- | :---: |
+| **1** | Python, FastAPI, Pydantic, environment setup and API fundamentals | Working backend foundation | ✅ Completed |
+| **2** | Gemini API integration, structured outputs and error handling | Validated LLM integration | ✅ Completed |
+| **3** | PostgreSQL, document storage and native PDF extraction | Document ingestion pipeline | ⏳ Next Up |
+| **4** | Hosted embeddings, pgvector and basic RAG | Initial semantic retrieval | Pending |
+| **5** | PostgreSQL full-text search and hybrid retrieval | Hybrid search pipeline | Pending |
+| **6** | RRF, reranking, source metadata and retrieval evaluation | Evaluated retrieval component | Pending |
+| **7** | LangGraph, research planning and workflow state | Controlled investigation workflow | Pending |
+| **8** | Legal analysis, claim extraction, verification and guardrails | Evidence-grounded analysis | Pending |
+| **9** | Case comparison, MCP integration and harness observability | Extended research capabilities | Pending |
+| **10** | React integration, investigation workspace and SSE | Integrated web application | Pending |
+| **11** | Report export, security, cost optimisation and deployment | Deployable prototype | Pending |
+| **12** | Evaluation, documentation, portfolio preparation and demonstration | Final project release | Pending |
 
 ### 19.1 Development Principles
 The project will follow these principles:
@@ -1050,9 +1052,55 @@ As of 1 November 2026, **Phase 0 — Project Foundation** has been formally comp
 | **0.8** | **Create Initial Documentation** | Completed | Documented and published `README.md`, `docs/architecture/system-architecture.md`, and `docs/decisions/architecture-decisions.md` (ADR-001 through ADR-014). |
 
 > [!NOTE]
-> **Implementation Boundary:** Phase 0 establishes the engineering environment and repository foundation only. All core application components—including database persistence, vector embeddings, hybrid retrieval, LangGraph workflows, Gemini LLM calls, claim verification, and frontend UI—are planned target designs and are **not yet implemented**. Implementation begins in Phase 1 (Backend Engineering Fundamentals).
+> **Phase 0 Implementation Boundary:** Phase 0 established the development environment, monorepo directory layout, security rules, environment templates, and architectural decision records. Core application implementation commenced in Phase 1 (Backend Engineering Fundamentals) and Phase 2 (LLM Engineering), both of which are fully completed.
 
-### 19.3 Documented Architectural Deviations and Refinements
+### 19.3 Backend Engineering Fundamentals Status (Phase 1 Completion)
+
+As of 2 November 2026, **Phase 1 — Backend Engineering Fundamentals** has been formally completed. The following foundational backend capabilities were implemented, reviewed, and validated across nine structured tasks:
+
+| Task | Title | Status | Execution Summary |
+| :---: | :--- | :---: | :--- |
+| **1.1** | **Python Fundamentals** | Completed | Standardized on Python 3.12.10 in root `venv/`, establishing type annotations, protocols, immutable Pydantic models, and clean OOP separation. |
+| **1.2** | **Project Structure & Architecture** | Completed | Implemented modular architecture in `apps/api/app/` separating `core/` (config, logging, errors), `schemas/` (Pydantic models), `services/` (domain logic), and `api/` (routes & dependencies). |
+| **1.3** | **FastAPI Application & Routing** | Completed | Configured `main.py` mounting unversioned `/health` and versioned `/api/v1` routes with OpenAPI documentation at `/docs` and `/redoc`. |
+| **1.4** | **REST API Design** | Completed | Implemented representative endpoints (`GET /health`, `GET /api/v1/health`, `GET /api/v1/sources`, `GET /api/v1/sources/{source_id}`, `POST /api/v1/sources/validate-reference`) following standard HTTP methods, status codes, and resource naming. |
+| **1.5** | **Pydantic Validation** | Completed | Built typed request and response schemas in `app/schemas/` with boundary constraints, regex slug patterns, year ranges, and enums (`SourceAuthenticity`, `LegalSourceCategory`). |
+| **1.6** | **Dependency Injection** | Completed | Implemented reusable dependencies in `app/api/deps.py` for application settings, domain service instances, and client correlation IDs. Verified override capability in tests. |
+| **1.7** | **Async & Error Handling** | Completed | Implemented custom application exceptions (`AppException`, `EntityNotFoundException`, `ValidationException`) and uniform `ErrorResponse` schema. Middleware masks unhandled 500 tracebacks. |
+| **1.8** | **Logging & Configuration** | Completed | Implemented centralized `Settings` using `pydantic-settings` cached via `@lru_cache`, and structured Python logging with standard formatters. |
+| **1.9** | **Automated Testing** | Completed | Developed an automated test suite using `pytest` and `httpx` in `apps/api/tests/` covering configuration, dependencies, schemas, error handling, and API endpoints (22 tests passing). |
+
+---
+
+### 19.4 LLM Engineering Status (Phase 2 Completion)
+
+As of 3 November 2026, **Phase 2 — LLM Engineering** has been formally completed. A reliable, production-grade Gemini integration and domain LLM service were engineered and validated across eight structured tasks:
+
+| Task | Title | Status | Execution Summary |
+| :---: | :--- | :---: | :--- |
+| **2.1** | **LLM Fundamentals & Tokenisation** | Completed | Established token consumption principles, distinguishing input (prompt) tokens from candidate (generation) tokens and native thinking tokens. Documented official Gemini rate cards ($0.30/1M input, $2.50/1M output for `gemini-2.5-flash`). |
+| **2.2** | **Gemini API Integration** | Completed | Integrated official Google GenAI SDK (`google-genai==1.2.0`). Implemented `GeminiProvider` utilizing `genai.Client` with secure credentials sourced from `Settings`. Handled SDK-specific millisecond timeouts (`HttpOptions(timeout=int(timeout_seconds * 1000))`). |
+| **2.3** | **System Prompts & Prompt Design** | Completed | Created immutable `PromptTemplate` abstraction in `app/prompts/base.py`. Defined authoritative `LEGAL_QUERY_ANALYSIS_PROMPT` (v1.0.0) with explicit anti-hallucination guardrails forbidding unsupported legal conclusions or invented citations. |
+| **2.4** | **Structured Output Generation** | Completed | Leveraged Gemini's native structured JSON mode via `response_mime_type="application/json"` and `response_schema` in `GenerateContentConfig`. |
+| **2.5** | **Pydantic Response Validation** | Completed | Built typed `LegalQueryAnalysisResult` schema with `PotentialStatute` and `LegalUrgencyLevel` enums. Implemented `validate_structured_response()` using Pydantic v2 `model_validate_json()` to treat model output as untrusted input. Ensured compatibility with Google GenAI schema compiler (all fields required; no `default` values or `extra="forbid"`). |
+| **2.6** | **Model Errors, Retries & Timeouts** | Completed | Built custom `LLMException` hierarchy (`LLMTimeoutError`, `LLMRateLimitError`, `LLMProviderError`, `LLMResponseValidationError`, `LLMConfigurationError`). Implemented `execute_with_retry()` with bounded retries (`llm_max_retries=2` allowing up to 3 total attempts), exponential backoff with full jitter, provider `Retry-After` delay awareness, and fail-fast non-retryable error filters. |
+| **2.7** | **Token Usage, Cost Tracking & Observability** | Completed | Implemented `LLMCallTelemetry` capturing correlation ID, latency, input/output/thinking/total tokens, estimated cost, retry count, and sanitized error categories. Structured logging emits operational telemetry while strictly omitting confidential legal text or API keys from logs (ADR-014). Discovered and accounted for native reasoning tokens (`thoughtsTokenCount`) in total billable output. |
+| **2.8** | **Model Configuration & Provider Abstraction** | Completed | Defined lightweight `LLMProvider` Protocol. Implemented production `GeminiProvider` and zero-network `FakeLLMProvider` test double. Wired `get_llm_provider` and `get_llm_service` via FastAPI dependency injection with lazy instantiation. |
+
+#### Verification & Live Testing Summary
+- **Automated Test Suite:** 73 total tests across 11 modules: 72 passed, 1 skipped (`test_real_gemini_api_integration`, intentionally skipped when `REAL_GEMINI_API_KEY` is absent for offline deterministic testing). Zero regression on Phase 1 tests.
+- **Manual Live Testing Script:** Developed developer-only CLI script `apps/api/scripts/manual_test_llm.py` to verify real Gemini API integration without exposing unnecessary public endpoints.
+- **Live Model Executions:** Executed 2 live end-to-end tests against Google Gemini 2.5 Flash:
+  - *Execution 1:* 319 prompt tokens, 248 candidate tokens, 451 thinking tokens (1,018 total tokens); 5.57s roundtrip; estimated cost $0.00184320 USD. Pydantic validation: Passed.
+  - *Execution 2:* 319 prompt tokens, 229 candidate tokens, 1,084 thinking tokens (1,632 total tokens); 7.96s roundtrip; estimated cost $0.00337820 USD. Pydantic validation: Passed.
+  - *Cost Accounting Clarification:* All reported costs are mathematical estimates derived from configured rates ($0.30/1M in, $2.50/1M out), not official billing statements.
+
+> [!NOTE]
+> **Implementation Boundary:** Phase 0, Phase 1, and Phase 2 are complete. **Phase 3 (Database & Document Intelligence)** is the next phase to be implemented. Core capabilities scheduled for Phase 3 and later—including PostgreSQL/pgvector database models, PyMuPDF native-text extraction, semantic embeddings, hybrid retrieval, LangGraph multi-agent workflows, citation verification engines, and React frontend—remain planned target architecture and are strictly **not yet implemented**.
+
+---
+
+### 19.5 Documented Architectural Deviations and Refinements
 
 During Phase 0, several early design concepts were refined to ensure development feasibility, operational reliability, and architectural discipline:
 

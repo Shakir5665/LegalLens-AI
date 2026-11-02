@@ -216,18 +216,15 @@ Expected report sections include:
 
 ## 11. Current Implementation Status
 
-### 11.1 Phase 0 Foundation — Completed
+### 11.1 Phase 0: Project Foundation — Completed
+Completed 1 November 2026. Monorepo directory hierarchy established (`apps/web/`, `apps/api/`, `docs/`, `infrastructure/`, `tests/`), Python 3.12.10 virtual environment isolated, `.gitignore` rules active, and initial architectural decisions (ADR-001 through ADR-014) documented.
 
-As of 1 November 2026, **Phase 0 — Project Foundation** is fully completed:
+### 11.2 Phase 1: Backend Engineering Fundamentals — Completed
+Completed 2 November 2026. Modular FastAPI application structure, typed Pydantic v2 schemas, domain-driven error handling, and in-memory Sri Lankan legal source catalog implemented and validated with 22 automated tests.
 
-* **Repository Architecture:** Monorepo directory hierarchy established (`apps/web/`, `apps/api/`, `docs/`, `infrastructure/`, `tests/`).
-* **Backend Skeleton:** Modular package structure established in `apps/api/app/` (`api/`, `core/`, `db/`, `schemas/`, `services/`) with a baseline health check endpoint (`/health`) in `main.py`.
-* **Runtime Standard:** Standardized on Python 3.12 (specifically Python 3.12.10) managed within a dedicated root virtual environment (`venv/`). Activation confirmed via `.\venv\Scripts\Activate.ps1`.
-* **Security & Environment:** Root `.gitignore` configured to prevent secret and dependency leakage. Environment template (`apps/api/.env.example`) and local placeholder configuration (`apps/api/.env`) established.
-* **Architectural Baseline:** System architecture and Architecture Decision Records (ADR-001 through ADR-014) formally documented.
+### 11.3 Phase 2: LLM Engineering — Completed
+Completed 3 November 2026. Production-grade Gemini integration via official `google-genai` SDK (`google-genai==1.2.0`), decoupled `LLMProvider` Protocol, `GeminiProvider`, `FakeLLMProvider`, `PromptTemplate` architecture, native structured JSON generation, Pydantic response validation (`LegalQueryAnalysisResult`), bounded retries with jitter (`execute_with_retry`), thinking-token accounting, deterministic token pricing, privacy-safe telemetry logging, and developer CLI verification script implemented and validated with 73 automated tests (72 passed, 1 skipped).
 
-### 11.2 Implementation Boundary
-
-The four logical layers (Application, Agent Orchestration, Legal Intelligence, Harness and Governance), database persistence (PostgreSQL/pgvector), hybrid retrieval (FTS + vector search), LangGraph investigation workflows, citation and evidence verification engines, and React frontend user interfaces described in this document represent the **agreed target architecture**.
-
-These application modules are **not yet implemented**. They will be systematically engineered, tested, and evaluated phase-by-phase according to the development roadmap, beginning with **Phase 1: Backend Engineering Fundamentals**.
+### 11.4 Next Milestone & Implementation Boundary
+- **Phase 3 (Database & Document Intelligence):** The next milestone to be implemented, covering PostgreSQL, pgvector, SQLAlchemy 2.0, Alembic, and PyMuPDF PDF extraction.
+- **Phases 4 through 12:** Core application modules described in this document—including pgvector semantic search, hybrid retrieval pipelines, LangGraph multi-agent investigation workflows, citation verification engines, and React web frontend—represent the **agreed target architecture** and remain strictly **unimplemented**. Implementation proceeds sequentially phase-by-phase.

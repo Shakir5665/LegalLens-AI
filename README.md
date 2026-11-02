@@ -6,9 +6,9 @@
 ---
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Status-Phase%201%20Completed-success?style=for-the-badge&logo=checkmarx" alt="Status" />
-  <img src="https://img.shields.io/badge/Next%20Phase-Phase%202%20LLM%20Engineering-blue?style=for-the-badge&logo=google" alt="Next Phase" />
-  <img src="https://img.shields.io/badge/Progress-2%20of%2013%20Phases%20(15%25)-blueviolet?style=for-the-badge" alt="Progress" />
+  <img src="https://img.shields.io/badge/Status-Phase%202%20Completed-success?style=for-the-badge&logo=checkmarx" alt="Status" />
+  <img src="https://img.shields.io/badge/Next%20Phase-Phase%203%20Database%20%26%20Document%20Intelligence-blue?style=for-the-badge&logo=postgresql" alt="Next Phase" />
+  <img src="https://img.shields.io/badge/Progress-3%20of%2013%20Phases%20(23%25)-blueviolet?style=for-the-badge" alt="Progress" />
   <img src="https://img.shields.io/badge/Python-3.12.10-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python Version" />
   <img src="https://img.shields.io/badge/Duration-12%20Weeks-blue?style=for-the-badge&logo=calendar" alt="Duration" />
   <img src="https://img.shields.io/badge/Effort-240%20Hours-indigo?style=for-the-badge&logo=clock" alt="Effort" />
@@ -28,11 +28,11 @@ I recommend following a 12-week, 240-hour development roadmap, based on your pro
 
 | Metric | Status | Details |
 | :--- | :--- | :--- |
-| **Current Milestone** | **Phase 1 — Backend Engineering Fundamentals** | **Completed** (2 November 2026) |
-| **Next Milestone** | **Phase 2 — LLM Engineering** | Pending implementation (Tasks 2.1–2.8) |
-| **Overall Progress** | **15%** | 2 of 13 development phases completed |
+| **Current Milestone** | **Phase 2 — LLM Engineering** | **Completed** (3 November 2026) |
+| **Next Milestone** | **Phase 3 — Database & Document Intelligence** | Pending implementation (Tasks 3.1–3.10) |
+| **Overall Progress** | **23%** | 3 of 13 development phases completed |
 | **Repository Baseline** | Stable | Public Monorepo on `main` ([github.com/Shakir5665/LegalLens-AI](https://github.com/Shakir5665/LegalLens-AI)) |
-| **Backend Runtime** | Operational | Python 3.12.10, FastAPI, Pydantic v2, Pytest suite (22/22 passing) |
+| **Backend Runtime** | Operational | Python 3.12.10, FastAPI, Pydantic v2, Google GenAI SDK (Gemini), Pytest suite (72 passed, 1 skipped) |
 
 > [!NOTE]
 > **Implementation Boundary:** Phase 0 established the development environment, monorepo directory skeleton, security rules, environment templates, and architectural decision records. **All core application capabilities** (PostgreSQL/pgvector storage, hybrid retrieval pipelines, LangGraph investigation workflows, Gemini LLM calls, claim verification engine, and React frontend) **remain unimplemented target architecture** to be developed progressively starting in Phase 1.
@@ -177,20 +177,113 @@ This is the more important part. I want you to understand the actual engineering
 
 ### Phase 2 — LLM Engineering
 
+> **Status:** ✅ **Completed** (3 November 2026)  
+> **Milestone Goal:** Build a reliable Gemini-powered LLM service capable of producing validated structured responses with predictable error handling, deterministic token cost accounting, and lightweight observability.
+
 **Objective:** Understand how to integrate LLMs into reliable software applications.
 
-|  Task   | What you will learn/build                    |
-| :-----: | :------------------------------------------- |
-| **2.1** | LLM fundamentals and tokenisation            |
-| **2.2** | Gemini API integration                       |
-| **2.3** | System prompts and prompt design             |
-| **2.4** | Structured output generation                 |
-| **2.5** | Pydantic-based LLM response validation       |
-| **2.6** | Model errors, retries and timeouts           |
-| **2.7** | Token usage and cost tracking                |
-| **2.8** | Model configuration and provider abstraction |
+|  Task   | What you will learn/build                    | Status |
+| :-----: | :------------------------------------------- | :----: |
+| **2.1** | LLM fundamentals and tokenisation            | ✅ Completed |
+| **2.2** | Gemini API integration                       | ✅ Completed |
+| **2.3** | System prompts and prompt design             | ✅ Completed |
+| **2.4** | Structured output generation                 | ✅ Completed |
+| **2.5** | Pydantic-based LLM response validation       | ✅ Completed |
+| **2.6** | Model errors, retries and timeouts           | ✅ Completed |
+| **2.7** | Token usage and cost tracking                | ✅ Completed |
+| **2.8** | Model configuration and provider abstraction | ✅ Completed |
 
-**Deliverable:** A reliable LLM service capable of producing validated structured responses.
+**Deliverable:** A reusable LLM service capable of producing validated structured responses through Gemini, with predictable error handling and basic observability.
+
+#### Phase 2 Verified Execution & Task Completion Summary
+
+| Task | Title | Verified Execution & Completion Details |
+| :---: | :--- | :--- |
+| **2.1** | **LLM Fundamentals & Tokenisation** | Established token consumption principles, distinguishing input (prompt) tokens from output (generation) tokens. Configured `gemini-2.5-flash` model defaults and documented official pricing rates. Ensured missing token usage is preserved as `None` rather than false zeros. |
+| **2.2** | **Gemini API Integration** | Installed official `google-genai` SDK (`google-genai==1.2.0`). Implemented `GeminiProvider` utilizing `genai.Client` with secure credentials sourced from `Settings`. Validates API keys upfront and isolates SDK-specific types from the application layer. Discovered and resolved SDK millisecond timeout requirements (`types.HttpOptions(timeout=int(timeout_seconds * 1000))`). |
+| **2.3** | **System Prompts & Prompt Design** | Created immutable `PromptTemplate` abstraction in `app/prompts/base.py`. Defined authoritative `LEGAL_QUERY_ANALYSIS_PROMPT` (v1.0.0) with explicit ethical constraints against unsupported legal conclusions or hallucinated citations. |
+| **2.4** | **Structured Output Generation** | Leveraged Gemini's native structured JSON mode via `response_mime_type="application/json"` and `response_schema` in `GenerateContentConfig`. |
+| **2.5** | **Pydantic Response Validation** | Built typed `LegalQueryAnalysisResult` schema with `PotentialStatute` and `LegalUrgencyLevel` enums. Implemented `validate_structured_response()` using Pydantic v2 `model_validate_json()` to treat model output as untrusted input. Ensured compatibility with Google GenAI schema compiler (all fields required; no `default` values or `extra="forbid"` which inject unsupported OpenAPI properties). |
+| **2.6** | **Model Errors, Retries & Timeouts** | Built custom `LLMException` hierarchy (`LLMTimeoutError`, `LLMRateLimitError`, `LLMProviderError`, `LLMResponseValidationError`, `LLMConfigurationError`). Implemented `execute_with_retry()` with bounded retries (`llm_max_retries=2` allowing up to 3 total attempts), exponential backoff with full jitter, provider `Retry-After` delay respect, and fail-fast behavior for non-retryable errors. Explicit timeout configured (30s). |
+| **2.7** | **Token Usage, Cost Tracking & Staged Observability** | Implemented `LLMCallTelemetry` capturing correlation ID, latency, input/output/thinking/total tokens, estimated cost (based on documented $0.30/1M in, $2.50/1M out rates for `gemini-2.5-flash`), retry count, and sanitized error categories. Standard Python logging emits operational telemetry while strictly forbidding raw prompts, legal documents, or secrets from logs ([ADR-014](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation)). |
+| **2.8** | **Model Configuration & Provider Abstraction** | Defined lightweight `LLMProvider` Protocol. Implemented production `GeminiProvider` and zero-network `FakeLLMProvider` test double. Wired `get_llm_provider` and `get_llm_service` via FastAPI dependency injection with lazy instantiation. |
+
+#### 14 Completed Phase 2 Engineering Capabilities
+
+1. **Official Google GenAI SDK Integration:** Integrated `google-genai` (v1.2.0) isolated strictly within the provider layer.
+2. **Lightweight Provider Contract:** Defined `@runtime_checkable class LLMProvider(Protocol)` with standard `generate()` and `generate_structured()` interfaces.
+3. **GeminiProvider Implementation:** Secure client lifecycle, millisecond timeout translation, and SDK error mapping.
+4. **Zero-Network FakeLLMProvider:** Test double supporting controllable responses, custom token usage, call recording, and transient failure simulation.
+5. **PromptTemplate Architecture:** Immutable templates encapsulating versioned system instructions and dynamic user keyword interpolation.
+6. **Native Structured JSON Generation:** Gemini SDK configuration utilizing `response_mime_type="application/json"` and Pydantic schema passing.
+7. **Strict Pydantic v2 Output Validation:** Model outputs validated as untrusted input via `model_validate_json()`, raising `LLMResponseValidationError` (HTTP 502) on malformed output.
+8. **Predictable Domain Error Hierarchy:** Typed application exceptions inheriting from `AppException` (`LLMTimeoutError`, `LLMRateLimitError`, `LLMProviderError`, `LLMConfigurationError`).
+9. **Bounded Retries with Jitter:** Deterministic `execute_with_retry` loop with exponential backoff, randomized jitter, and fail-fast non-retryable error filters.
+10. **Explicit Timeout Enforcement:** 30s client-level timeout mapped to `LLMTimeoutError` (HTTP 504).
+11. **Thinking-Token Accounting:** Captures internal reasoning tokens (`thoughtsTokenCount`) generated by Gemini 2.5 Flash, billing them at the official standard output rate ($2.50/1M tokens).
+12. **Model-Call Telemetry & Privacy-Safe Logging:** Emits structured metadata (correlation ID, tokens, latency, cost, retries) while strictly omitting confidential legal text or API keys from logs.
+13. **Domain LLMService Orchestration:** Unified high-level service (`LLMService`) orchestrating prompt rendering, provider calls, response validation, and telemetry.
+14. **Developer Manual Integration Testing:** Created `apps/api/scripts/manual_test_llm.py` enabling real-world verification without exposing public API endpoints.
+
+#### Staged Observability Roadmap
+
+- **Phase 2 (Completed):** Model-call telemetry (per-call latency, token counts, thinking tokens, cost estimate, retries, sanitized error codes). Zero external APM dependencies.
+- **Phase 7 (Planned):** Agent & workflow observability (LangGraph execution traces, node-level transitions, investigation checkpointing).
+- **Phase 9 (Planned):** Advanced observability & Harness Engineering (centralized tracing, runtime budgets, cost caps, execution audits).
+
+#### Automated Test Suite Verification
+
+```text
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-8.4.2 -- rootdir: LegalLens-AI
+collected 73 items
+
+apps/api/tests/test_config.py ......................... [ 2%]
+apps/api/tests/test_dependencies.py .................... [ 6%]
+apps/api/tests/test_error_handling.py .................. [ 10%]
+apps/api/tests/test_health_api.py ...................... [ 13%]
+apps/api/tests/test_llm_config_and_pricing.py .......... [ 28%]
+apps/api/tests/test_llm_provider.py .................... [ 43%] (1 skipped)
+apps/api/tests/test_llm_retries_and_errors.py .......... [ 58%]
+apps/api/tests/test_llm_service.py ..................... [ 71%]
+apps/api/tests/test_llm_validation.py .................. [ 83%]
+apps/api/tests/test_schemas.py ......................... [ 90%]
+apps/api/tests/test_sources_api.py ..................... [100%]
+
+======================== 72 passed, 1 skipped in 0.23s ========================
+```
+
+- **Tests Collected:** 73
+- **Passed:** 72 (100% of runnable offline tests)
+- **Skipped:** 1 (`test_real_gemini_api_integration`, skipped by design when `REAL_GEMINI_API_KEY` is not set to maintain zero-network determinism)
+- **Failed:** 0
+- **Regression:** Zero regression; all 22 original Phase 1 tests remain passing.
+
+#### Real-World Live Verification Records
+
+Two successful live executions of `manual_test_llm.py` were performed against the Google Gemini API:
+
+| Metric | Live Execution 1 | Live Execution 2 | Notes |
+| :--- | :--- | :--- | :--- |
+| **Model** | `gemini-2.5-flash` | `gemini-2.5-flash` | Default production model |
+| **Input Tokens** | 319 | 319 | Prompt text + system instruction tokens |
+| **Candidate Output Tokens** | 248 | 229 | Visible generated structured JSON text |
+| **Thinking Tokens** | 451 | 1,084 | Internal reasoning tokens (`thoughtsTokenCount`) |
+| **Total Tokens** | 1,018 | 1,632 | Exact aggregate reported by Gemini API |
+| **Total Billable Output** | 699 tokens | 1,313 tokens | Candidate tokens + Thinking tokens |
+| **Estimated Cost (USD)** | **$0.00184320** | **$0.00337820** | Calculated via documented rates ($0.30/1M in, $2.50/1M out) |
+| **Roundtrip Latency** | 5.57 seconds | 7.96 seconds | Network latency + reasoning + JSON generation |
+| **Execution Status** | `SUCCESS` | `SUCCESS` | Pydantic validation: **PASSED** |
+
+> [!IMPORTANT]
+> **Cost Accounting Clarification:** The costs reported above are mathematical estimates derived from official rate cards ($0.30 per 1M input tokens, $2.50 per 1M output/thinking tokens effective November 2026). They do not represent official Google Cloud invoice statements. Not all possible model edge-cases or transient failure behaviors have been tested live; live calls were performed strictly for verification. Automated unit tests remain completely decoupled from live network availability via `FakeLLMProvider`.
+
+#### Known Limitations & Deferred Capabilities
+
+- **Thinking Budget Controls:** Gemini 2.5 Flash operates with a dynamic internal reasoning budget by default. Direct thinking budget limits via `types.ThinkingConfig` may be tuned in later agentic phases if lower latency is required.
+- **Multimodal & Audio Accounting:** Multimodal tokens (audio/video) and long-term cached storage costs are not modeled as they are outside the current text-based legal research scope.
+- **Multi-Turn Context Caching:** Prompt caching is supported in the pricing registry ($0.03/1M cached tokens) but automated cache creation is deferred to Phase 3/4 when large legal statutes are ingested.
+- **Workflow-Level Tracing:** Multi-step agent execution tracing is deferred to Phase 7 (LangGraph).
 
 ---
 

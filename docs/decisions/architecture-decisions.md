@@ -2,7 +2,7 @@
 
 **Project:** LegalLens AI
 **Status:** Accepted for MVP architecture
-**Last Updated:** 1 November 2026
+**Last Updated:** 3 November 2026
 
 This document records the major architectural and technology decisions for LegalLens AI. These decisions establish the technical direction for the initial MVP and should be revisited only when implementation evidence, evaluation results, or genuine project requirements justify a change.
 
@@ -415,8 +415,13 @@ All future technical decisions should follow these principles:
 ## Implementation Status
 
 * **Phase 0 — Project Foundation:** **COMPLETED** (1 November 2026)
-  * ADR-001 through ADR-014 have been formally reviewed, accepted, and recorded.
-  * Baseline monorepo structure, Python 3.12.10 virtual environment, environment variable templates, root `.gitignore`, and documentation assets are fully established.
-* **Phase 1 through Phase 12:** **PLANNED**
-  * Core application features—including database persistence, vector indexing, hybrid retrieval, LangGraph investigation workflows, citation verification, and React frontend—are documented target designs and are not yet implemented.
-  * Implementation work commences sequentially with Phase 1 (Backend Engineering Fundamentals).
+  * ADR-001 through ADR-014 formally reviewed, accepted, and recorded.
+  * Baseline monorepo structure, Python 3.12.10 virtual environment, environment variable templates, root `.gitignore`, and documentation assets established.
+* **Phase 1 — Backend Engineering Fundamentals:** **COMPLETED** (2 November 2026)
+  * Modular FastAPI architecture, Pydantic v2 schemas, custom error handling, and in-memory Sri Lankan legal source catalog implemented and validated (22 unit tests passing).
+* **Phase 2 — LLM Engineering:** **COMPLETED** (3 November 2026)
+  * Gemini integration via official `google-genai` SDK, `LLMProvider` Protocol, `GeminiProvider`, `FakeLLMProvider`, `PromptTemplate`, native structured JSON output, Pydantic response validation, bounded retries with jitter (`execute_with_retry`), thinking-token accounting, deterministic cost estimation, privacy-safe telemetry logging, and developer CLI verification script implemented (72 passed, 1 skipped).
+* **Phase 3 — Database & Document Intelligence:** **NEXT UP** (Pending Implementation)
+  * Tasks 3.1 through 3.10 covering PostgreSQL, pgvector, SQLAlchemy 2.0, Alembic, and PyMuPDF PDF extraction.
+* **Phase 4 through Phase 12:** **PLANNED TARGET ARCHITECTURE**
+  * Core capabilities scheduled for Phase 4 and later (vector embeddings, hybrid retrieval, LangGraph multi-agent workflows, citation verification engine, React frontend) remain planned target designs and are strictly not yet implemented.

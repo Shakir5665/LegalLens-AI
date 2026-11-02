@@ -23,9 +23,15 @@ class Settings(BaseSettings):
     api_v1_prefix: str = "/api/v1"
     log_level: str = "INFO"
 
-    # Placeholders for future phases (Phase 2 & Phase 3)
-    database_url: str | None = None
+    # AI Model Configuration (Phase 2 LLM Engineering)
     gemini_api_key: str | None = None
+    gemini_model: str = "gemini-2.5-flash"
+    llm_timeout_seconds: float = 30.0
+    llm_max_retries: int = 2
+    llm_temperature: float = 0.2
+
+    # Database & Frontend Placeholders (Phase 3 & Phase 10)
+    database_url: str | None = None
     cors_origins: str = "http://localhost:5173"
 
 
