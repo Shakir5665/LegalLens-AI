@@ -29,13 +29,13 @@ I recommend following a 12-week, 240-hour development roadmap, based on your pro
 | Metric | Status | Details |
 | :--- | :--- | :--- |
 | **Current Milestone** | **Phase 2 — LLM Engineering** | **Completed** (3 November 2026) |
-| **Next Milestone** | **Phase 3 — Database & Document Intelligence** | Pending implementation (Tasks 3.1–3.10) |
-| **Overall Progress** | **23%** | 3 of 13 development phases completed |
+| **Next Milestone** | **Phase 3 — Database & Document Intelligence** | **Currently in progress** (Tasks 3.1–3.10) |
+| **Overall Progress** | **23%** | 3 of 13 development phases completed (Phase 0, 1, 2 completed; Phase 3 in progress) |
 | **Repository Baseline** | Stable | Public Monorepo on `main` ([github.com/Shakir5665/LegalLens-AI](https://github.com/Shakir5665/LegalLens-AI)) |
 | **Backend Runtime** | Operational | Python 3.12.10, FastAPI, Pydantic v2, Google GenAI SDK (Gemini), Pytest suite (72 passed, 1 skipped) |
 
 > [!NOTE]
-> **Implementation Boundary:** Phase 0 established the development environment, monorepo directory skeleton, security rules, environment templates, and architectural decision records. **All core application capabilities** (PostgreSQL/pgvector storage, hybrid retrieval pipelines, LangGraph investigation workflows, Gemini LLM calls, claim verification engine, and React frontend) **remain unimplemented target architecture** to be developed progressively starting in Phase 1.
+> **Implementation Boundary:** Phase 0 (Project Foundation), Phase 1 (Backend Engineering Fundamentals), and Phase 2 (LLM Engineering) are **completed**. Phase 3 (Database & Document Intelligence) is **currently in progress**. Future capabilities—including vector embeddings, hybrid retrieval, LangGraph agent workflows, citation verification, and the React frontend—remain planned target architecture and are strictly not yet implemented.
 
 ---
 
@@ -45,9 +45,9 @@ I recommend following a 12-week, 240-hour development roadmap, based on your pro
 - [1. Complete Development Roadmap](#1-complete-development-roadmap)
 - [2. What Exactly Will We Build in Each Phase?](#2-what-exactly-will-we-build-in-each-phase)
   - [Phase 0 — Project Foundation (Completed)](#phase-0--project-foundation)
-  - [Phase 1 — Backend Engineering Fundamentals (Next Up)](#phase-1--backend-engineering-fundamentals)
-  - [Phase 2 — LLM Engineering](#phase-2--llm-engineering)
-  - [Phase 3 — Database & Document Intelligence](#phase-3--database--document-intelligence)
+  - [Phase 1 — Backend Engineering Fundamentals (Completed)](#phase-1--backend-engineering-fundamentals)
+  - [Phase 2 — LLM Engineering (Completed)](#phase-2--llm-engineering)
+  - [Phase 3 — Database & Document Intelligence (In Progress)](#phase-3--database--document-intelligence)
   - [Phase 4 — Embeddings & Basic RAG](#phase-4--embeddings--basic-rag)
   - [Phase 5 — Hybrid Retrieval Engineering](#phase-5--hybrid-retrieval-engineering)
   - [Phase 6 — Retrieval Evaluation](#phase-6--retrieval-evaluation)
@@ -62,13 +62,16 @@ I recommend following a 12-week, 240-hour development roadmap, based on your pro
 - [5. Our Project Completion Tracker](#5-our-project-completion-tracker)
 - [6. A Few Important Engineering Decisions](#6-a-few-important-engineering-decisions)
 - [7. High-Level Architecture](#7-high-level-architecture)
-- [8. Repository Structure](#8-repository-structure)
-- [9. Development Environment](#9-development-environment)
+- [8. Caching Architecture (Planned)](#8-caching-architecture-planned)
+- [9. Repository Structure](#9-repository-structure)
+- [10. Development Environment](#10-development-environment)
   - [Prerequisites](#prerequisites)
   - [Backend Environment Setup](#backend-environment-setup)
+  - [Running the Application](#running-the-application)
+  - [Running Tests](#running-tests)
   - [Environment Variables](#environment-variables)
-- [10. Project Documentation](#10-project-documentation)
-- [11. Development Roadmap](#11-development-roadmap)
+- [11. Project Documentation](#11-project-documentation)
+- [12. Development Roadmap](#12-development-roadmap)
 
 ---
 
@@ -125,10 +128,10 @@ This is the more important part. I want you to understand the actual engineering
 | Task | Title | Verified Execution & Completion Details |
 | :---: | :--- | :--- |
 | **0.1** | **Finalize MVP Scope** | Selected Complete Functional MVP. Bounded the legal corpus strictly to Sri Lankan Employment Law (*Industrial Disputes Act*, *Termination of Employment of Workmen Act No. 45 of 1971*, *Payment of Gratuity Act No. 12 of 1983*, and selected judicial decisions). Established 20 functional requirements (`FR-01` to `FR-20`) and non-functional requirements. Defined 4 source authenticity classifications (`VerifiedOfficial`, `VerifiedSecondary`, `SyntheticDemo`, `Unverified`) and 5 citation verification outcomes (`Supported`, `Partially supported`, `Unsupported`, `Contradicted`, `Ambiguous`). Confirmed that knowledge graph functionality is not a mandatory MVP dependency and is deferred to post-MVP. |
-| **0.2** | **Finalize System Architecture** | Selected a single modular Python FastAPI backend, formally evaluating and rejecting the previously considered .NET + FastAPI dual-backend split ([ADR-001](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-001-use-a-modular-monolithic-backend)). Defined 4 logical layers (Application, Agent Orchestration, Legal Intelligence, Harness and Governance). Mapped the 7-stage sequential investigation workflow. Established controlled LangGraph orchestration, direct Python module calls for internal retrieval/verification, Python MCP SDK for external client interoperability ([ADR-008](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-008-use-mcp-for-external-tool-interoperability)), and deterministic report templates ([ADR-009](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-009-keep-critical-operations-deterministic)). |
-| **0.3** | **Create GitHub Repository** | Created public GitHub repository at [`https://github.com/Shakir5665/LegalLens-AI`](https://github.com/Shakir5665/LegalLens-AI) with default branch `main`. Public visibility was approved as an explicit architectural decision ([ADR-014](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation)), mandating strict defense-in-depth secret isolation across all tooling, configuration files, and documentation. |
+| **0.2** | **Finalize System Architecture** | Selected a single modular Python FastAPI backend, formally evaluating and rejecting the previously considered .NET + FastAPI dual-backend split ([ADR-001](docs/decisions/architecture-decisions.md#adr-001-use-a-modular-monolithic-backend)). Defined 4 logical layers (Application, Agent Orchestration, Legal Intelligence, Harness and Governance). Mapped the 7-stage sequential investigation workflow. Established controlled LangGraph orchestration, direct Python module calls for internal retrieval/verification, Python MCP SDK for external client interoperability ([ADR-008](docs/decisions/architecture-decisions.md#adr-008-use-mcp-for-external-tool-interoperability)), and deterministic report templates ([ADR-009](docs/decisions/architecture-decisions.md#adr-009-keep-critical-operations-deterministic)). |
+| **0.3** | **Create GitHub Repository** | Created public GitHub repository at [`https://github.com/Shakir5665/LegalLens-AI`](https://github.com/Shakir5665/LegalLens-AI) with default branch `main`. Public visibility was approved as an explicit architectural decision ([ADR-014](docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation)), mandating strict defense-in-depth secret isolation across all tooling, configuration files, and documentation. |
 | **0.4** | **Establish Project Structure** | Established monorepo layout: `apps/web/`, `apps/api/`, `docs/architecture/`, `docs/decisions/`, `infrastructure/`, and `tests/`. The backend modular package structure includes `apps/api/app/` (`api/`, `core/`, `db/`, `schemas/`, `services/`) with a baseline `/health` FastAPI endpoint in `apps/api/app/main.py`. *(Foundational skeleton only; domain logic, database models, and service implementations remain unimplemented).* |
-| **0.5** | **Configure Python Environment** | Standardized on Python 3.12 (specifically Python 3.12.10) managed via a dedicated virtual environment (`venv/`) at repository root ([ADR-013](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-013-select-python-312-as-the-core-backend-runtime)), resolving coexistence with system Python 3.14.3. Verified Python and pip operate strictly through the virtual environment. Windows PowerShell activation: `.\venv\Scripts\Activate.ps1`. |
+| **0.5** | **Configure Python Environment** | Standardized on Python 3.12 (specifically Python 3.12.10) managed via a dedicated virtual environment (`venv/`) at repository root ([ADR-013](docs/decisions/architecture-decisions.md#adr-013-select-python-312-as-the-core-backend-runtime)), resolving coexistence with system Python 3.14.3. Verified Python and pip operate strictly through the virtual environment. Windows PowerShell activation: `.\venv\Scripts\Activate.ps1`. |
 | **0.6** | **Configure Environment Variables** | Created configuration template `apps/api/.env.example` and local placeholder file `apps/api/.env` containing sanitized dummy values for application settings, database connection URL, Gemini API key, and frontend CORS origins. Ensured no actual credentials or secrets are committed. |
 | **0.7** | **Configure Git Workflow and .gitignore** | Configured root `.gitignore` covering environment files and secrets (`.env*` except `!.env.example`), virtual environments (`venv/`, `.venv/`), Python cache files (`__pycache__/`, `*.pyc`), test/tool caches (`.pytest_cache/`, `.coverage`), frontend dependencies (`node_modules/`), build outputs (`dist/`, `build/`), and OS/IDE files. Verified `.env` exclusion. |
 | **0.8** | **Create Initial Documentation** | Authored and published initial documentation: `README.md`, `docs/architecture/system-architecture.md`, and `docs/decisions/architecture-decisions.md` (recording ADR-001 through ADR-014). |
@@ -205,7 +208,7 @@ This is the more important part. I want you to understand the actual engineering
 | **2.4** | **Structured Output Generation** | Leveraged Gemini's native structured JSON mode via `response_mime_type="application/json"` and `response_schema` in `GenerateContentConfig`. |
 | **2.5** | **Pydantic Response Validation** | Built typed `LegalQueryAnalysisResult` schema with `PotentialStatute` and `LegalUrgencyLevel` enums. Implemented `validate_structured_response()` using Pydantic v2 `model_validate_json()` to treat model output as untrusted input. Ensured compatibility with Google GenAI schema compiler (all fields required; no `default` values or `extra="forbid"` which inject unsupported OpenAPI properties). |
 | **2.6** | **Model Errors, Retries & Timeouts** | Built custom `LLMException` hierarchy (`LLMTimeoutError`, `LLMRateLimitError`, `LLMProviderError`, `LLMResponseValidationError`, `LLMConfigurationError`). Implemented `execute_with_retry()` with bounded retries (`llm_max_retries=2` allowing up to 3 total attempts), exponential backoff with full jitter, provider `Retry-After` delay respect, and fail-fast behavior for non-retryable errors. Explicit timeout configured (30s). |
-| **2.7** | **Token Usage, Cost Tracking & Staged Observability** | Implemented `LLMCallTelemetry` capturing correlation ID, latency, input/output/thinking/total tokens, estimated cost (based on documented $0.30/1M in, $2.50/1M out rates for `gemini-2.5-flash`), retry count, and sanitized error categories. Standard Python logging emits operational telemetry while strictly forbidding raw prompts, legal documents, or secrets from logs ([ADR-014](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation)). |
+| **2.7** | **Token Usage, Cost Tracking & Staged Observability** | Implemented `LLMCallTelemetry` capturing correlation ID, latency, input/output/thinking/total tokens, estimated cost (based on documented $0.30/1M in, $2.50/1M out rates for `gemini-2.5-flash`), retry count, and sanitized error categories. Standard Python logging emits operational telemetry while strictly forbidding raw prompts, legal documents, or secrets from logs ([ADR-014](docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation)). |
 | **2.8** | **Model Configuration & Provider Abstraction** | Defined lightweight `LLMProvider` Protocol. Implemented production `GeminiProvider` and zero-network `FakeLLMProvider` test double. Wired `get_llm_provider` and `get_llm_service` via FastAPI dependency injection with lazy instantiation. |
 
 #### 14 Completed Phase 2 Engineering Capabilities
@@ -288,6 +291,9 @@ Two successful live executions of `manual_test_llm.py` were performed against th
 ---
 
 ### Phase 3 — Database & Document Intelligence
+
+> **Status:** ⏳ **In Progress**  
+> **Milestone Goal:** Build the legal document management and ingestion foundation with PostgreSQL, SQLAlchemy, and PyMuPDF.
 
 **Objective:** Build the legal document management and ingestion foundation.
 
@@ -592,13 +598,13 @@ We can use this as our master roadmap throughout development.
 
 ### LegalLens AI progress
 
-**`[████░░░░░░░░░░░░░░░░░░░░░░░░]` 15%**
-*2 of 13 phases completed*
+**`[██████░░░░░░░░░░░░░░░░░░]` 23%**
+*3 of 13 phases completed*
 
-- [x] **Phase 0:** Project Foundation *(Completed - 1 November 2026)*
-- [x] **Phase 1:** Backend Engineering Fundamentals *(Completed - 2 November 2026)*
-- [ ] **Phase 2:** LLM Engineering *(Next Up)*
-- [ ] **Phase 3:** Database & Document Intelligence
+- [x] **Phase 0:** Project Foundation *(Completed — 1 November 2026)*
+- [x] **Phase 1:** Backend Engineering Fundamentals *(Completed — 2 November 2026)*
+- [x] **Phase 2:** LLM Engineering *(Completed — 3 November 2026)*
+- [ ] **Phase 3:** Database & Document Intelligence *(In Progress)*
 - [ ] **Phase 4:** Embeddings & Basic RAG
 - [ ] **Phase 5:** Hybrid Retrieval Engineering
 - [ ] **Phase 6:** Retrieval Evaluation
@@ -615,16 +621,16 @@ We can use this as our master roadmap throughout development.
 
 ## 6. A Few Important Engineering Decisions
 
-I want us to maintain these boundaries throughout the project, as formalized in our [Architecture Decision Records](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md) (ADR-001 through ADR-014):
+I want us to maintain these boundaries throughout the project, as formalized in our [Architecture Decision Records](docs/decisions/architecture-decisions.md) (ADR-001 through ADR-015):
 
-1. **Modular Monolithic Backend ([ADR-001](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-001-use-a-modular-monolithic-backend)):** One unified, modular FastAPI backend in Python. The previously considered .NET + FastAPI dual-backend split was formally evaluated and rejected to eliminate cross-runtime overhead, serialization latency, and redundant data models.
-2. **Deterministic First ([ADR-009](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-009-keep-critical-operations-deterministic)):** Database operations, permissions, reference existence checks, search ranking, and report rendering use conventional Python code. LLMs are reserved for language understanding and semantic reasoning.
+1. **Modular Monolithic Backend ([ADR-001](docs/decisions/architecture-decisions.md#adr-001-use-a-modular-monolithic-backend)):** One unified, modular FastAPI backend in Python. The previously considered .NET + FastAPI dual-backend split was formally evaluated and rejected to eliminate cross-runtime overhead, serialization latency, and redundant data models.
+2. **Deterministic First ([ADR-009](docs/decisions/architecture-decisions.md#adr-009-keep-critical-operations-deterministic)):** Database operations, permissions, reference existence checks, search ranking, and report rendering use conventional Python code. LLMs are reserved for language understanding and semantic reasoning.
 3. **Evidence Traceability is Mandatory:** A legal claim without traceable supporting evidence must never silently appear as verified. All claims must map to explicit source passages with clear authenticity classifications (`VerifiedOfficial`, `VerifiedSecondary`, `SyntheticDemo`, `Unverified`).
-4. **Hybrid Retrieval with Deterministic Fallback ([ADR-004](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-004-use-hybrid-retrieval--postgresql-full-text-search-and-pgvector), [ADR-007](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-007-use-a-hosted-embedding-api)):** Combine PostgreSQL Full-Text Search (lexical) with pgvector (semantic) using Reciprocal Rank Fusion. Hosted embeddings replace resource-intensive local BGE-M3 models, with PostgreSQL FTS serving as an immediate deterministic fallback.
-5. **Direct Internal Execution vs External Interoperability ([ADR-008](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-008-use-mcp-for-external-tool-interoperability)):** Internal workflow nodes directly invoke Python modules. The Python MCP SDK is reserved exclusively for exposing approved legal research tools to external AI clients.
-6. **Controlled Orchestration ([ADR-006](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-006-use-langgraph-for-controlled-investigation-orchestration)):** LangGraph coordinates a stateful, bounded, and inspectable investigation lifecycle. Unrestricted autonomous agents are strictly out of scope.
-7. **Security from Day One ([ADR-014](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation)):** Retrieved documents and user uploads are treated as untrusted input. LLM prompts are never treated as security boundaries. Credentials and secrets are strictly isolated from the public GitHub repository.
-8. **Test Before Adding Complexity:** Evaluate basic semantic RAG before introducing rerankers, multi-step agent graphs, or advanced query transformations. Native-text PDF parsing ([ADR-010](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-010-use-native-text-pdf-extraction-initially)) is prioritized; OCR is deferred.
+4. **Hybrid Retrieval with Deterministic Fallback ([ADR-004](docs/decisions/architecture-decisions.md#adr-004-use-hybrid-retrieval--postgresql-full-text-search-and-pgvector), [ADR-007](docs/decisions/architecture-decisions.md#adr-007-use-a-hosted-embedding-api)):** Combine PostgreSQL Full-Text Search (lexical) with pgvector (semantic) using Reciprocal Rank Fusion. Hosted embeddings replace resource-intensive local BGE-M3 models, with PostgreSQL FTS serving as an immediate deterministic fallback.
+5. **Direct Internal Execution vs External Interoperability ([ADR-008](docs/decisions/architecture-decisions.md#adr-008-use-mcp-for-external-tool-interoperability)):** Internal workflow nodes directly invoke Python modules. The Python MCP SDK is reserved exclusively for exposing approved legal research tools to external AI clients.
+6. **Controlled Orchestration ([ADR-006](docs/decisions/architecture-decisions.md#adr-006-use-langgraph-for-controlled-investigation-orchestration)):** LangGraph coordinates a stateful, bounded, and inspectable investigation lifecycle. Unrestricted autonomous agents are strictly out of scope.
+7. **Security from Day One ([ADR-014](docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation)):** Retrieved documents and user uploads are treated as untrusted input. LLM prompts are never treated as security boundaries. Credentials and secrets are strictly isolated from the public GitHub repository.
+8. **Test Before Adding Complexity:** Evaluate basic semantic RAG before introducing rerankers, multi-step agent graphs, or advanced query transformations. Native-text PDF parsing ([ADR-010](docs/decisions/architecture-decisions.md#adr-010-use-native-text-pdf-extraction-initially)) is prioritized; OCR is deferred.
 9. **Measure Everything:** Systematically measure and benchmark retrieval quality (Precision@K, Recall@K, MRR), citation verification accuracy, workflow reliability, latency, token usage, and cost per investigation.
 
 These principles follow the architecture, ADRs, and engineering constraints in your proposal.
@@ -648,11 +654,50 @@ The investigation workflow follows this general sequence:
 User Question ──► Question Analysis ──► Legal Retrieval ──► Evidence-Grounded Analysis ──► Citation and Claim Verification ──► Evidence Gate ──► Research Report
 ```
 
-See [System Architecture](file:///C:/Users/shaki/Desktop/LegalLense/docs/architecture/system-architecture.md) for the detailed architecture and [Architecture Decisions](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md) for the rationale behind the major technology choices.
+See [System Architecture](docs/architecture/system-architecture.md) for the detailed architecture and [Architecture Decisions](docs/decisions/architecture-decisions.md) for the rationale behind the major technology choices.
 
 ---
 
-## 8. Repository Structure
+## 8. Caching Architecture (Planned)
+
+> **Status:** Proposed Architecture — Documentation Only / Implementation Deferred to Roadmap Phases  
+> Detailed Specification: [`docs/architecture/caching-strategy.md`](docs/architecture/caching-strategy.md)
+
+LegalLens AI incorporates a staged, version-aware caching architecture designed to optimize latency and minimize external LLM token expenditure while strictly preventing stale, ungrounded, or cross-tenant legal inaccuracies.
+
+### 8.1 Proposed Caching Layers Across Roadmap Phases
+
+| Phase | Cache Layer | Target Workload | Cache Identity & Scope |
+| :---: | :--- | :--- | :--- |
+| **Phase 2** | **Prompt Immutability & Versioning** | Prompt templates & settings | Frozen dataclass templates (`PromptTemplate`), version tags, `@lru_cache` settings singleton. *(Completed)* |
+| **Phase 3** | **Document Extraction Cache** | PyMuPDF text & structure artifacts | Source file SHA-256, document version, parser version, extraction options. Preserves offsets, page numbers, and provenance. |
+| **Phase 4** | **Embedding Cache** | Chunk vector representations | Normalized text hash, embedding model/version, vector dimensionality, preprocessing version. |
+| **Phase 5** | **Retrieval & Hybrid Search Cache** | PostgreSQL FTS & pgvector candidate sets | Short-lived (TTL up to 15m), query fingerprint, tenant/user scope, metadata filters, ranking parameters, index snapshot. |
+| **Phase 7** | **LangGraph Node-Level Cache** | Pure deterministic graph steps | Node input hash, execution context, model version. Strictly distinguished from LangGraph checkpointing (workflow recovery state). |
+| **Phase 8** | **Citation Verification Cache** | Claim-to-passage grounding results | Source version, passage hash, claim hash, verification algorithm version. |
+| **Phase 11** | **Exact LLM Response Cache & Cache Manager** | Repeated identical Gemini inquiries | Full multi-dimensional key: canonical query, legal as-of date, tenant scope, prompt version, model identifier, schema version. |
+| **Phase 12** | **Evaluation & Benchmark Suite** | Caching telemetry & evaluation | Cache hit/miss/bypass rates, avoided Gemini API calls, avoided tokens, estimated cost savings, freshness audits. |
+
+### 8.2 Free-First Infrastructure Strategy
+
+The caching architecture adheres to a **free-first** infrastructure philosophy:
+- **Durable Metadata & Extraction Artifacts:** Stored natively in **PostgreSQL**.
+- **Vector Storage:** Maintained natively in **pgvector** without requiring standalone vector databases.
+- **Optional High-Throughput Shared Cache:** Evaluated for **self-hosted Valkey** in Phase 11 only if multi-worker concurrent throughput demands it. Valkey is strictly optional; no paid Redis or cache SaaS is mandated.
+- **Development Fallback:** Bounded in-process Python memory cache for local development and offline unit testing.
+- *Clarification:* "Free-first" means zero mandatory subscription fees for managed cache SaaS (e.g., Upstash, Redis Cloud). It does not imply that cloud compute, database hosting, or Gemini API token consumption are free.
+
+### 8.3 Semantic Caching Policy: Disabled by Default
+
+> [!CAUTION]
+> **Semantic caching of final legal answers is strictly disabled by default and deferred.**
+> In legal research, questions that appear semantically identical often turn on subtle factual differences (such as employee tenure, scheduled enterprise status, or statutory limitation dates) leading to contradictory legal outcomes. Answer-level semantic reuse presents unacceptable legal malpractice risks. Semantic candidate reuse may only be evaluated post-MVP for low-risk, internal similarity operations under rigorous false-positive verification.
+
+For complete architectural details, key formulas, invalidation rules, and security controls, refer to [`docs/architecture/caching-strategy.md`](docs/architecture/caching-strategy.md).
+
+---
+
+## 9. Repository Structure
 
 ```text
 LegalLens-AI/
@@ -689,7 +734,7 @@ LegalLens-AI/
 
 ---
 
-## 9. Development Environment
+## 10. Development Environment
 
 ### Prerequisites
 
@@ -750,19 +795,20 @@ Create a local `.env` file in `apps/api/` using that template when configuring t
 
 ---
 
-## 10. Project Documentation
+## 11. Project Documentation
 
 | Document | Purpose |
 | :--- | :--- |
-| [`PROJECT_PROPOSAL_REPORT.md`](file:///C:/Users/shaki/Desktop/LegalLense/PROJECT_PROPOSAL_REPORT.md) | Project proposal, objectives, scope, requirements, and evaluation strategy. |
-| [`README.md`](file:///C:/Users/shaki/Desktop/LegalLense/README.md) | Project overview, architecture summary, setup guidance, and development roadmap. |
-| [`docs/architecture/system-architecture.md`](file:///C:/Users/shaki/Desktop/LegalLense/docs/architecture/system-architecture.md) | Detailed system architecture and investigation workflow. |
-| [`docs/architecture/backend-architecture.md`](file:///C:/Users/shaki/Desktop/LegalLense/docs/architecture/backend-architecture.md) | Phase 1 backend architecture, request lifecycle, endpoints, and testing guide. |
-| [`docs/decisions/architecture-decisions.md`](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md) | Accepted architecture and technology decisions. |
+| [`PROJECT_PROPOSAL_REPORT.md`](PROJECT_PROPOSAL_REPORT.md) | Project proposal, objectives, scope, requirements, and evaluation strategy. |
+| [`README.md`](README.md) | Project overview, architecture summary, setup guidance, and development roadmap. |
+| [`docs/architecture/system-architecture.md`](docs/architecture/system-architecture.md) | Detailed system architecture and investigation workflow. |
+| [`docs/architecture/backend-architecture.md`](docs/architecture/backend-architecture.md) | Phase 1 backend architecture, request lifecycle, endpoints, and testing guide. |
+| [`docs/architecture/caching-strategy.md`](docs/architecture/caching-strategy.md) | Comprehensive version-aware caching architecture, layer definitions, invalidation policies, and roadmap alignment. |
+| [`docs/decisions/architecture-decisions.md`](docs/decisions/architecture-decisions.md) | Accepted architecture and technology decisions (ADR-001 through ADR-015). |
 
 ---
 
-## 11. Development Roadmap
+## 12. Development Roadmap
 
 The detailed development roadmap, including phases, tasks, acceptance criteria, and implementation progress, is maintained below.
 

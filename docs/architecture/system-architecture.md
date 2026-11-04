@@ -200,6 +200,37 @@ Expected report sections include:
 | Progress updates | Server-Sent Events (SSE) |
 | Deployment | Docker Compose |
 
+## 9.1 Caching Architecture (Planned)
+
+> **Status:** Proposed Target Architecture — Documentation Only / Implementation Deferred to Respective Roadmap Phases  
+> Detailed Specification: [`caching-strategy.md`](caching-strategy.md)
+
+LegalLens AI incorporates a version-aware, multi-tiered caching architecture designed to optimize system latency and control Google Gemini API token costs while strictly upholding legal grounding, data freshness, and tenant security.
+
+### 9.1.1 Logical Cache Manager Component
+- Implemented as an encapsulated logical service within the FastAPI modular monolith (`app/services/cache_service.py` in Phase 11), providing a unified caching abstraction across domain workflows.
+- Implements graceful degradation (fail-open): cache backend timeouts or errors never block active legal research execution paths.
+
+### 9.1.2 Free-First Storage Strategy
+- **Durable Metadata & Extraction Artifacts:** Stored natively in **PostgreSQL** tables, leveraging existing relational infrastructure for document checksums, passage offsets, and cache metadata without introducing secondary databases.
+- **Vector Storage:** Maintained natively via **pgvector** in PostgreSQL, avoiding dedicated third-party vector databases.
+- **Short-Lived Shared Cache:** Evaluated for **self-hosted Valkey** in Phase 11 only if multi-worker concurrent production loads demonstrate a measurable need. Valkey is strictly optional; no paid Redis Cloud or proprietary cache SaaS is required.
+- **Development Fallback:** Thread-safe, bounded in-process memory cache (`cachetools` LRU) used strictly for local development and offline unit testing.
+
+### 9.1.3 Workload Placement & Caching Layers
+1. **Document Extraction (Phase 3):** PyMuPDF extraction artifacts keyed by source file SHA-256, document version, and parser options. Preserves exact page numbers, character offsets, and structural headings.
+2. **Dense Embeddings (Phase 4):** Vector representations keyed by normalized text hash, embedding model identifier, vector dimensions, and chunking parameters.
+3. **Retrieval & Hybrid Search (Phase 5):** Short-lived candidate passage sets (TTL up to 15m) keyed by query fingerprint, keyword tokens, active metadata filters, tenant scope, RRF ranking parameters, and search index version.
+4. **LangGraph Node-Level Results (Phase 7):** Deterministic, pure node outputs keyed by node input hash and model version. Strictly distinct from LangGraph execution checkpointing (which preserves workflow execution state for pause/resume and auditing).
+5. **Citation Verification (Phase 8):** Grounding determinations keyed by passage hash, source document version, claim hash, and verifier version.
+6. **Exact LLM Responses (Phase 11):** Identical Gemini inquiries keyed by canonical query, jurisdiction, legal as-of date, tenant scope, prompt version, model ID, and response schema version.
+
+### 9.1.4 Security, Legal Freshness, and Invalidation Controls
+- **Authorization Verification:** Active user permissions and tenant scope are validated before returning any cached result; cross-tenant leakage is strictly prevented.
+- **Sensitive Parameter Protection:** User queries or confidential facts in cache keys are hashed using keyed HMAC-SHA-256 to prevent exposure in logs or monitoring tools.
+- **Legal Freshness & Version-Aware Invalidation:** Invalidation rules always take precedence over TTL expiry. Cached artifacts are purged immediately upon statutory amendment, judicial precedent overruling, document re-extraction, access-control updates, or prompt/model version upgrades.
+- **Semantic Caching Disabled by Default:** Semantic caching of final legal answers is **strictly disabled and deferred**. Superficially similar questions frequently involve distinct legal principles (e.g., probationers vs. permanent employees), making answer reuse a major legal liability risk.
+
 ## 10. Important Architecture Constraints
 
 - Maintain one modular FastAPI backend.
@@ -213,6 +244,7 @@ Expected report sections include:
 - Call internal Python retrieval and verification modules directly rather than unnecessarily exposing them through MCP.
 - Begin with native-text PDFs; OCR is deferred.
 - Introduce additional complexity only when evaluation demonstrates a need.
+- Cached results may only be reused when authorization, legal context, source provenance, and relevant processing versions match.
 
 ## 11. Current Implementation Status
 
@@ -225,6 +257,7 @@ Completed 2 November 2026. Modular FastAPI application structure, typed Pydantic
 ### 11.3 Phase 2: LLM Engineering — Completed
 Completed 3 November 2026. Production-grade Gemini integration via official `google-genai` SDK (`google-genai==1.2.0`), decoupled `LLMProvider` Protocol, `GeminiProvider`, `FakeLLMProvider`, `PromptTemplate` architecture, native structured JSON generation, Pydantic response validation (`LegalQueryAnalysisResult`), bounded retries with jitter (`execute_with_retry`), thinking-token accounting, deterministic token pricing, privacy-safe telemetry logging, and developer CLI verification script implemented and validated with 73 automated tests (72 passed, 1 skipped).
 
-### 11.4 Next Milestone & Implementation Boundary
-- **Phase 3 (Database & Document Intelligence):** The next milestone to be implemented, covering PostgreSQL, pgvector, SQLAlchemy 2.0, Alembic, and PyMuPDF PDF extraction.
+### 11.4 Current Milestone & Implementation Boundary
+- **Phase 3 (Database & Document Intelligence):** Currently in progress, covering PostgreSQL, pgvector, SQLAlchemy 2.0, Alembic, and PyMuPDF PDF extraction.
+- **ADR-015 (Caching Architecture):** Formally accepted as future target design (4 November 2026).
 - **Phases 4 through 12:** Core application modules described in this document—including pgvector semantic search, hybrid retrieval pipelines, LangGraph multi-agent investigation workflows, citation verification engines, and React web frontend—represent the **agreed target architecture** and remain strictly **unimplemented**. Implementation proceeds sequentially phase-by-phase.

@@ -2,7 +2,7 @@
 
 **Project:** LegalLens AI
 **Status:** Accepted for MVP architecture
-**Last Updated:** 3 November 2026
+**Last Updated:** 4 November 2026
 
 This document records the major architectural and technology decisions for LegalLens AI. These decisions establish the technical direction for the initial MVP and should be revisited only when implementation evidence, evaluation results, or genuine project requirements justify a change.
 
@@ -398,6 +398,56 @@ LegalLens AI is designed to demonstrate professional AI engineering and legal te
 
 ---
 
+## ADR-015: Introduce a Version-Aware, Application-Level Caching Layer
+
+**Status:** Accepted as a future design; implementation deferred to relevant roadmap phases.
+
+**Decision**
+
+Establish a centralized, version-aware, application-level caching architecture managed within the modular FastAPI backend through a logical Cache Manager. The implementation is governed by these core tenets:
+1. **Logical Cache Manager:** Keep caching logic encapsulated within the FastAPI backend monolith (ADR-001), presenting a uniform caching contract across application services.
+2. **PostgreSQL as Primary Durable Cache Store:** Store durable cache metadata, document extraction artifacts, and fingerprint registries natively in PostgreSQL, eliminating redundant storage infrastructure.
+3. **pgvector for Vector Caching:** Retain embedding vectors and index structures natively in pgvector (ADR-004), avoiding dedicated third-party vector cache services.
+4. **Optional Self-Hosted Valkey for Shared Transient Caching:** Defer shared high-throughput caching to Phase 11 (Production Engineering) and evaluate self-hosted Valkey solely if multi-worker concurrent throughput benchmarks justify it. Valkey is strictly optional; no paid Redis or proprietary SaaS cache is mandated.
+5. **Bounded In-Process Cache for Development:** Provide a thread-safe, bounded in-process memory cache for local development and test suite isolation.
+6. **Incremental Phase-Based Implementation:** Introduce cache mechanisms strictly aligned with roadmap milestones (Phase 2 prompt immutability, Phase 3 extraction artifacts, Phase 4 embeddings, Phase 5 retrieval candidate sets, Phase 7 LangGraph nodes, Phase 8 citation verification, Phase 11 Cache Manager & exact LLM responses, Phase 12 evaluation).
+7. **Semantic Caching Disabled by Default:** Strictly forbid semantic caching of final legal answers and research conclusions. Semantically similar legal questions often hinge on different facts, effective dates, statutory thresholds, or procedural postures; answer-level semantic reuse introduces severe legal liability and hallucination risks.
+8. **Strict Security, Authorization, and Freshness Gates:** Prioritize version-aware invalidation and authorization verification over cache hit ratios. Cached responses must never be returned across tenants or without checking user permissions, statutory as-of dates, and source amendments.
+
+**Context**
+
+LegalLens AI performs compute-intensive and latency-sensitive operations: native-text PDF extraction, dense embedding generation, hybrid lexical/semantic retrieval, iterative LangGraph agentic reasoning, claim-level citation verification, and structured Gemini LLM generation. Repeated queries or identical statutory lookups can lead to redundant external API token spend and CPU overhead.
+
+However, legal research software cannot treat caching as a generic key-value optimization. Legal data carries strict correctness requirements:
+- Legal statutes and judicial precedents are amended, repealed, or overruled over time.
+- Research questions that appear superficially similar can have diametrically opposed legal answers depending on minute factual variations (such as length of service or scheduled employment status).
+- User documents and case notes are confidential and tenant-isolated.
+- Cached LLM outputs are AI-generated assistive text, not authoritative legal truth.
+
+**Rationale**
+
+- **Cost and Latency Control:** Avoids wasteful Google Gemini token consumption and repetitive PDF extraction while maintaining rapid response times for identical, validated workflows.
+- **Legal Correctness & Freshness:** Explicit composite cache keys—incorporating legal as-of dates, statutory version hashes, prompt version tags, schema versions, and tenant scopes—guarantee that cached data is never returned in an obsolete or improper legal context.
+- **Free-First Infrastructure Discipline:** Leveraging PostgreSQL and pgvector avoids the cost and operational footprint of external paid caching SaaS (e.g., Upstash, Redis Cloud, Pinecone). If a transient shared cache is later required for multi-worker deployments in Phase 11, open-source self-hosted Valkey provides high performance without vendor lock-in or licensing fees.
+- **Maintainable Modularity:** Encapsulating caching logic in a Cache Manager abstraction maintains clean domain boundaries and allows graceful degradation (fail-open) if the caching backend encounters an error.
+
+**Consequences**
+
+- Caching code must not be implemented prematurely; implementation is deferred strictly to the corresponding roadmap phase for each workload.
+- Cache invalidation logic must be rigorously defined for all stored entities (statutory updates, re-indexing, permission changes).
+- Cache keys must be composite and comprehensive; raw user question text alone is strictly forbidden as a cache key.
+- Sensitive query parameters and confidential document content in cache keys must be hashed using keyed HMAC-SHA-256 to prevent information leakage in cache logs.
+- Cache misses, hits, invalidations, avoided Gemini API calls, avoided tokens, and estimated cost savings must be tracked in telemetry (Phase 11/12) without falsifying cached results as fresh API calls.
+
+**Rejected Alternatives**
+
+1. **Deploying Redis or Valkey Immediately in Phase 2/3:** Rejected as premature overengineering. Phase 2 LLM engineering and Phase 3 document ingestion do not possess concurrent multi-worker throughput demands justifying an external distributed cache server.
+2. **Semantic Caching of Legal Conclusions:** Formally evaluated and rejected. Vector similarity search over legal questions inevitably conflates legally distinct scenarios (e.g., probationers vs. non-probationers), leading to invalid legal conclusions and hallucinated authorities.
+3. **Unbounded In-Memory Python Caching in Production:** Rejected. In-memory dictionaries lack cross-process sharing across multi-worker Uvicorn processes and create memory-leak risks under production workloads.
+4. **Cache-Aside Without Version Awareness:** Rejected. Standard TTL-only caching without source version and legal as-of date invalidation would serve superseded statutes and overruled case law to legal practitioners.
+
+---
+
 ## General Decision Principles
 
 All future technical decisions should follow these principles:
@@ -421,7 +471,9 @@ All future technical decisions should follow these principles:
   * Modular FastAPI architecture, Pydantic v2 schemas, custom error handling, and in-memory Sri Lankan legal source catalog implemented and validated (22 unit tests passing).
 * **Phase 2 — LLM Engineering:** **COMPLETED** (3 November 2026)
   * Gemini integration via official `google-genai` SDK, `LLMProvider` Protocol, `GeminiProvider`, `FakeLLMProvider`, `PromptTemplate`, native structured JSON output, Pydantic response validation, bounded retries with jitter (`execute_with_retry`), thinking-token accounting, deterministic cost estimation, privacy-safe telemetry logging, and developer CLI verification script implemented (72 passed, 1 skipped).
-* **Phase 3 — Database & Document Intelligence:** **NEXT UP** (Pending Implementation)
+* **Phase 3 — Database & Document Intelligence:** **IN PROGRESS**
   * Tasks 3.1 through 3.10 covering PostgreSQL, pgvector, SQLAlchemy 2.0, Alembic, and PyMuPDF PDF extraction.
+* **ADR-015 (Caching Architecture):** **ACCEPTED AS FUTURE DESIGN** (4 November 2026)
+  * Version-aware application-level caching strategy accepted; implementation deferred to relevant roadmap phases (Phases 3, 4, 5, 7, 8, 11, 12).
 * **Phase 4 through Phase 12:** **PLANNED TARGET ARCHITECTURE**
   * Core capabilities scheduled for Phase 4 and later (vector embeddings, hybrid retrieval, LangGraph multi-agent workflows, citation verification engine, React frontend) remain planned target designs and are strictly not yet implemented.
