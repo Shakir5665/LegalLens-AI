@@ -448,6 +448,42 @@ However, legal research software cannot treat caching as a generic key-value opt
 
 ---
 
+## ADR-016: Cloud Object Storage Abstraction, Neon S3 Compatibility, and Private Presigned Access Control
+
+**Status:** Accepted and Implemented (4 November 2026)
+
+**Decision**
+
+1. **Storage Provider Abstraction:** Establish an abstract `StorageProvider` interface defining uniform binary lifecycle operations (`store_file`, `get_file_bytes`, `delete_file`, `file_exists`, `generate_presigned_download_url`).
+2. **Dual Providers:**
+   - `LocalStorageProvider`: Default for local development, CI/CD, and offline testing. Enforces strict path traversal confinement and generates backend-verified HMAC-SHA256 signed URLs.
+   - `NeonStorageProvider`: For production cloud deployments using Neon S3-compatible Object Storage in AWS Singapore (`ap-southeast-1`). Configured using `boto3` with path-style addressing (`Config(s3={"addressing_style": "path"}, signature_version="s3v4")`).
+3. **Strict Private Storage & Presigned Downloads:** All storage containers remain strictly private. Frontend clients never receive long-lived cloud credentials; downloads are authorized and served via short-lived presigned URLs (default 10-minute expiry).
+4. **Backend-Mediated Uploads:** All document uploads pass through FastAPI endpoints for content-based magic-byte validation, streaming size limits (25 MB default), SHA-256 checksum calculation, and transactional database recording. Direct client-to-cloud bypass is rejected.
+5. **Immutable Structured Keys:** Uploaded PDFs are persisted under deterministic, non-overwritable keys: `documents/{document_id}/versions/{version_id}/{uuid}.pdf`.
+6. **Duplicate Rejection Policy:** Uploading an identical PDF (by SHA-256) to the same logical legal document is rejected with `HTTP 409 Conflict` (`DUPLICATE_DOCUMENT_VERSION`).
+7. **Soft Deletion & Chunk Suppression:** Soft-deleting a version marks `is_deleted=True`, `deleted_at=now`, and purges all `DocumentChunk` records from the database to remove them from active search/RAG pipelines, while retaining the PDF object in storage for potential administrative recovery.
+8. **Synchronous Lifecycle & Failure Recovery:** Document versions transition through `processing`, `processed`, `failed`, or `scanned_only`. Failures during extraction or chunking preserve the PDF object and record diagnostic metadata, enabling manual re-processing via a dedicated `/retry` endpoint without file re-upload.
+
+**Context**
+
+LegalLens AI requires durable, cost-effective, and secure PDF storage for Sri Lankan legal instruments. Neon provides managed PostgreSQL in AWS Singapore (`ap-southeast-1`) alongside S3-compatible object storage. Development and local testing must remain fully functional offline without mandatory cloud infrastructure.
+
+**Rationale**
+
+- Provider abstraction decouples application services from specific cloud storage vendors.
+- Path-style S3 addressing ensures full compatibility with Neon object storage.
+- Private presigned URLs satisfy strict legal evidence security and zero-credential frontend exposure.
+- Soft-deletion with chunk purging guarantees search integrity while preserving raw legal evidence.
+
+**Consequences**
+
+- Storage provider is selectable via `STORAGE_PROVIDER=local|neon`.
+- `boto3` is included in backend dependencies.
+- Local storage remains the zero-configuration default for development and automated tests.
+
+---
+
 ## General Decision Principles
 
 All future technical decisions should follow these principles:
@@ -471,9 +507,20 @@ All future technical decisions should follow these principles:
   * Modular FastAPI architecture, Pydantic v2 schemas, custom error handling, and in-memory Sri Lankan legal source catalog implemented and validated (22 unit tests passing).
 * **Phase 2 — LLM Engineering:** **COMPLETED** (3 November 2026)
   * Gemini integration via official `google-genai` SDK, `LLMProvider` Protocol, `GeminiProvider`, `FakeLLMProvider`, `PromptTemplate`, native structured JSON output, Pydantic response validation, bounded retries with jitter (`execute_with_retry`), thinking-token accounting, deterministic cost estimation, privacy-safe telemetry logging, and developer CLI verification script implemented (72 passed, 1 skipped).
-* **Phase 3 — Database & Document Intelligence:** **IN PROGRESS**
-  * Tasks 3.1 through 3.10 covering PostgreSQL, pgvector, SQLAlchemy 2.0, Alembic, and PyMuPDF PDF extraction.
+* **Phase 3 — Database & Document Intelligence:** **COMPLETED** (4 November 2026)
+  * Tasks 3.1 through 3.10 and Tasks 3.A through 3.G fully implemented and verified against live Neon PostgreSQL (127 passed, 1 skipped).
+  * Implemented: PostgreSQL connectivity, connection pooling, SQLAlchemy 2.x models (`Document`, `DocumentVersion`, `DocumentChunk`), Alembic migrations, PyMuPDF extraction, structure-aware legal chunking with multi-page section tracing, storage provider abstraction (`LocalStorageProvider` and S3-compatible `NeonStorageProvider`), presigned download URLs, immutable key paths, HTTP 409 duplicate rejection, soft-deletion with chunk purge/restoration, failure recovery lifecycle, and `/retry` endpoint.
 * **ADR-015 (Caching Architecture):** **ACCEPTED AS FUTURE DESIGN** (4 November 2026)
   * Version-aware application-level caching strategy accepted; implementation deferred to relevant roadmap phases (Phases 3, 4, 5, 7, 8, 11, 12).
-* **Phase 4 through Phase 12:** **PLANNED TARGET ARCHITECTURE**
-  * Core capabilities scheduled for Phase 4 and later (vector embeddings, hybrid retrieval, LangGraph multi-agent workflows, citation verification engine, React frontend) remain planned target designs and are strictly not yet implemented.
+* **ADR-016 (Cloud Object Storage & Presigned Access):** **ACCEPTED AND IMPLEMENTED** (4 November 2026)
+  * StorageProvider interface, Local and Neon S3 implementations, private presigned URLs, immutable version keys, and soft deletion.
+* **Phase 4 through Phase 12:** **PLANNED TARGET ROADMAP**
+  * **Phase 4:** Dense Vector Embeddings & pgvector Integration (Semantic Chunk Embeddings & Indexing).
+  * **Phase 5:** Hybrid Legal Retrieval (Reciprocal Rank Fusion over pgvector and BM25/Full-Text Search).
+  * **Phase 6:** Agentic Workflow Design & State Graph Modeling.
+  * **Phase 7:** Multi-Agent Legal Investigation Implementation (LangGraph).
+  * **Phase 8:** Grounded Citation Verification & Hallucination Guardrails.
+  * **Phase 9:** Optical Character Recognition (OCR) for Scanned Historical Legal Documents.
+  * **Phase 10:** Multi-Tenant Isolation, User Identity, Ownership & Research Projects.
+  * **Phase 11:** Production Engineering, Storage Hardening, Advanced Caching & Governance.
+  * **Phase 12:** Empirical Evaluation, Benchmarking & Deployment.

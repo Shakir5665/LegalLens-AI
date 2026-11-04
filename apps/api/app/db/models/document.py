@@ -13,6 +13,7 @@ import uuid
 
 from sqlalchemy import (
     BigInteger,
+    Boolean,
     CheckConstraint,
     DateTime,
     ForeignKey,
@@ -49,6 +50,8 @@ class ExtractionStatus(str, Enum):
     """Extraction lifecycle state for a document version."""
 
     PENDING = "pending"
+    PROCESSING = "processing"
+    PROCESSED = "processed"
     COMPLETED = "completed"
     FAILED = "failed"
     SCANNED_ONLY = "scanned_only"
@@ -187,6 +190,17 @@ class DocumentVersion(Base):
         nullable=False,
         default=utc_now,
         server_default=func.now(),
+    )
+    is_deleted: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default="false",
+        index=True,
+    )
+    deleted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )
 
     # Relationships

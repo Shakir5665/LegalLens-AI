@@ -114,7 +114,7 @@ def test_upload_valid_document_success(api_test_env):
     assert payload["title"] == "Industrial Disputes Act No. 43 of 1950"
     assert payload["document_type"] == "statute"
     assert payload["version_number"] == 1
-    assert payload["extraction_status"] == "completed"
+    assert payload["extraction_status"] in ["processed", "completed"]
     assert payload["page_count"] == 1
     assert payload["chunk_count"] >= 1
     assert len(payload["file_hash"]) == 64
@@ -164,8 +164,8 @@ def test_upload_scanned_pdf_returns_422(api_test_env):
     assert "ocr is not supported" in payload["message"].lower() or "scanned-only" in payload["message"].lower()
 
 
-def test_upload_duplicate_same_document_returns_existing_version(api_test_env):
-    """Verify duplicate detection: uploading identical PDF to same document does not duplicate."""
+def test_upload_duplicate_same_document_rejected_409(api_test_env):
+    """Verify Task 3.D duplicate detection: uploading identical PDF to same document is rejected with HTTP 409."""
     client, _ = api_test_env
 
     pdf_bytes = build_pdf_bytes(["Section 1. Short title."])
@@ -178,19 +178,17 @@ def test_upload_duplicate_same_document_returns_existing_version(api_test_env):
     )
     assert resp1.status_code == 201
     doc_id = resp1.json()["document_id"]
-    v1_id = resp1.json()["version_id"]
 
-    # Second upload with same document_id and identical file bytes
+    # Second upload with same document_id and identical file bytes -> HTTP 409
     resp2 = client.post(
         "/api/v1/documents",
         data={"title": "Duplicate Test Statute", "document_id": doc_id},
         files={"file": ("statute.pdf", io.BytesIO(pdf_bytes), "application/pdf")},
     )
-    assert resp2.status_code == 201
+    assert resp2.status_code == 409
     payload2 = resp2.json()
-    assert payload2["document_id"] == doc_id
-    assert payload2["version_id"] == v1_id  # Returns existing version!
-    assert payload2["version_number"] == 1
+    assert payload2["error_code"] == "DUPLICATE_DOCUMENT_VERSION"
+    assert "already exists" in payload2["message"].lower()
 
 
 def test_upload_subsequent_new_version(api_test_env):
@@ -395,7 +393,7 @@ def test_end_to_end_multi_page_legal_ingestion_verification(api_test_env):
     version_id = upload_data["version_id"]
     assert upload_data["version_number"] == 1
     assert upload_data["page_count"] == 3
-    assert upload_data["extraction_status"] == "completed"
+    assert upload_data["extraction_status"] in ["processed", "completed"]
     assert upload_data["chunk_count"] >= 2
 
     # Verification Step 1 & 2: Check logical document and version via GET /documents/{id}
@@ -413,7 +411,7 @@ def test_end_to_end_multi_page_legal_ingestion_verification(api_test_env):
     assert v_summary["version_number"] == 1
     assert v_summary["original_filename"] == "ida_consolidated.pdf"
     assert v_summary["page_count"] == 3
-    assert v_summary["extraction_status"] == "completed"
+    assert v_summary["extraction_status"] in ["processed", "completed"]
 
     # Verification Step 3: Check chunks via GET /documents/{id}/versions/1/chunks
     chunks_resp = client.get(f"/api/v1/documents/{doc_id}/versions/1/chunks")
@@ -440,3 +438,116 @@ def test_end_to_end_multi_page_legal_ingestion_verification(api_test_env):
     assert sec_31c_chunk["page_number"] == 2
     assert sec_31c_chunk["page_end"] == 3  # Proves multi-page span: Page 2 -> 3
     assert len(sec_31c_chunk["content_hash"]) == 64
+
+
+def test_presigned_download_url_and_local_stream(api_test_env):
+    """Task 3.B: Verify generating presigned download URL and streaming the PDF object."""
+    client, _ = api_test_env
+
+    pdf_bytes = build_pdf_bytes(["Section 1. Presigned download test."])
+    resp = client.post(
+        "/api/v1/documents",
+        data={"title": "Download Test Document"},
+        files={"file": ("download_test.pdf", io.BytesIO(pdf_bytes), "application/pdf")},
+    )
+    assert resp.status_code == 201
+    doc_id = resp.json()["document_id"]
+
+    # 1. Generate presigned download URL
+    dl_resp = client.get(f"/api/v1/documents/{doc_id}/versions/1/download?expires_in=600")
+    assert dl_resp.status_code == 200
+    dl_data = dl_resp.json()
+    assert "download_url" in dl_data
+    assert dl_data["expires_in"] == 600
+    assert dl_data["filename"] == "download_test.pdf"
+
+    # 2. Fetch the file via the returned signed URL
+    download_url = dl_data["download_url"]
+    file_resp = client.get(download_url)
+    assert file_resp.status_code == 200
+    assert file_resp.headers["content-type"] == "application/pdf"
+    assert file_resp.content == pdf_bytes
+
+    # 3. Forged signature must return 403 Forbidden
+    tampered_url = download_url.replace("signature=", "signature=tampered_")
+    forbidden_resp = client.get(tampered_url)
+    assert forbidden_resp.status_code == 403
+
+
+def test_soft_delete_and_restore_document_version(api_test_env):
+    """Task 3.F: Verify soft-deletion purges chunks from DB while retaining storage object, and restore recovers chunks."""
+    client, _ = api_test_env
+
+    pdf_bytes = build_pdf_bytes(["Section 1. Soft deletion lifecycle test."])
+    resp = client.post(
+        "/api/v1/documents",
+        data={"title": "Soft Delete Statute"},
+        files={"file": ("soft_del.pdf", io.BytesIO(pdf_bytes), "application/pdf")},
+    )
+    assert resp.status_code == 201
+    doc_id = resp.json()["document_id"]
+
+    # Chunks are initially present
+    chunks_before = client.get(f"/api/v1/documents/{doc_id}/versions/1/chunks")
+    assert chunks_before.status_code == 200
+    assert chunks_before.json()["total_chunks"] >= 1
+
+    # 1. Soft-delete version 1
+    del_resp = client.delete(f"/api/v1/documents/{doc_id}/versions/1")
+    assert del_resp.status_code == 200
+    del_payload = del_resp.json()
+    assert del_payload["is_deleted"] is True
+    assert del_payload["chunks_removed"] >= 1
+
+    # 2. Assert chunks are no longer retrievable (HTTP 404)
+    chunks_after = client.get(f"/api/v1/documents/{doc_id}/versions/1/chunks")
+    assert chunks_after.status_code == 404
+
+    # 3. Assert document detail hides soft-deleted version by default
+    doc_detail = client.get(f"/api/v1/documents/{doc_id}").json()
+    assert len(doc_detail["versions"]) == 0
+
+    # But shows it when include_deleted=True
+    doc_detail_all = client.get(f"/api/v1/documents/{doc_id}?include_deleted=true").json()
+    assert len(doc_detail_all["versions"]) == 1
+    assert doc_detail_all["versions"][0]["is_deleted"] is True
+
+    # 4. Restore the soft-deleted version
+    restore_resp = client.post(f"/api/v1/documents/{doc_id}/versions/1/restore")
+    assert restore_resp.status_code == 200
+    restore_payload = restore_resp.json()
+    assert restore_payload["is_deleted"] is False
+    assert restore_payload["chunk_count"] >= 1
+
+    # 5. Chunks are active again
+    chunks_restored = client.get(f"/api/v1/documents/{doc_id}/versions/1/chunks")
+    assert chunks_restored.status_code == 200
+    assert chunks_restored.json()["total_chunks"] >= 1
+
+
+def test_retry_failed_document_version(api_test_env):
+    """Task 3.E: Verify manual retry endpoint re-processes a failed document version."""
+    client, session_factory = api_test_env
+    from app.db.models.document import DocumentVersion, ExtractionStatus
+
+    pdf_bytes = build_pdf_bytes(["Section 1. Retry test."])
+    resp = client.post(
+        "/api/v1/documents",
+        data={"title": "Retry Test Document"},
+        files={"file": ("retry.pdf", io.BytesIO(pdf_bytes), "application/pdf")},
+    )
+    assert resp.status_code == 201
+    doc_id = resp.json()["document_id"]
+
+    # Simulate an extraction failure by forcing the version status to FAILED in the DB
+    with session_factory() as session:
+        version = session.query(DocumentVersion).filter_by(document_id=uuid.UUID(doc_id), version_number=1).first()
+        version.extraction_status = ExtractionStatus.FAILED.value
+        session.commit()
+
+    # Trigger retry endpoint
+    retry_resp = client.post(f"/api/v1/documents/{doc_id}/versions/1/retry")
+    assert retry_resp.status_code == 200
+    retry_payload = retry_resp.json()
+    assert retry_payload["extraction_status"] in ["processed", "completed"]
+    assert retry_payload["chunk_count"] >= 1

@@ -1,14 +1,12 @@
-"""Local file validation and storage management service for LegalLens AI.
+"""Storage service integrating configurable storage providers for LegalLens AI.
 
-Task 3.6: File Validation and Storage.
-Follows ADR-009 (Deterministic operations) and ADR-014 (Strict security & data isolation).
+Tasks 3.A, 3.6, 3.D: File Validation, Provider Abstraction, and Immutable Version Storage.
+Follows ADR-003, ADR-009, and ADR-014.
 """
 
 from dataclasses import dataclass
 import hashlib
 from pathlib import Path
-import shutil
-import tempfile
 from typing import BinaryIO
 import uuid
 
@@ -17,6 +15,9 @@ import pymupdf
 from app.core.config import Settings, get_settings
 from app.core.errors import FileValidationError, StorageError
 from app.core.logging import get_logger
+from app.storage.base import StorageProvider
+from app.storage.factory import create_storage_provider
+from app.storage.local import LocalStorageProvider
 
 logger = get_logger("app.services.storage")
 
@@ -27,7 +28,7 @@ PDF_MAGIC_BYTES = b"%PDF-"
 class StoredFileInfo:
     """Metadata describing a validated and stored original PDF document."""
 
-    storage_path: str  # Safe relative or filename path within storage_dir
+    storage_path: str  # Immutable object key / path within storage provider
     file_hash: str  # Hexadecimal SHA-256 checksum
     file_size_bytes: int
     original_filename: str
@@ -35,40 +36,35 @@ class StoredFileInfo:
 
 
 class StorageService:
-    """Manages secure local filesystem storage and content-based validation for PDF uploads."""
+    """Manages content-based PDF validation and delegates persistence to a StorageProvider."""
 
-    def __init__(self, settings: Settings | None = None, storage_dir: Path | str | None = None) -> None:
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        provider: StorageProvider | None = None,
+        storage_dir: Path | str | None = None,
+    ) -> None:
         self.settings = settings or get_settings()
-        if storage_dir is not None:
-            self.base_dir = Path(storage_dir).resolve()
+        if provider is not None:
+            self.provider = provider
+        elif storage_dir is not None:
+            self.provider = LocalStorageProvider(settings=self.settings, base_dir=storage_dir)
         else:
-            self.base_dir = Path(self.settings.storage_dir).resolve()
-        self.max_upload_size = self.settings.max_upload_size_bytes
-        self._ensure_storage_dir()
+            self.provider = create_storage_provider(self.settings)
 
-    def _ensure_storage_dir(self) -> None:
-        """Create the storage directory tree securely if not already existing."""
-        try:
-            self.base_dir.mkdir(parents=True, exist_ok=True)
-        except OSError as exc:
-            logger.error("Failed to create storage directory at '%s': %s", self.base_dir, exc)
-            raise StorageError(
-                message="Storage directory could not be initialized.",
-                details={"storage_dir": str(self.base_dir)},
-            ) from exc
+        self.max_upload_size = self.settings.max_upload_size_bytes
 
     def resolve_path(self, relative_path: str) -> Path:
-        """Resolve a relative storage path and ensure it does not escape base_dir."""
-        target = (self.base_dir / relative_path).resolve()
-        try:
-            target.relative_to(self.base_dir)
-        except ValueError as exc:
-            logger.warning("Path traversal attempt detected: '%s'", relative_path)
+        """Resolve a storage path for local operations, asserting strict containment."""
+        if hasattr(self.provider, "_resolve_key"):
+            return self.provider._resolve_key(relative_path)
+        normalized = relative_path.replace("\\", "/").lstrip("/")
+        if ".." in normalized.split("/"):
             raise FileValidationError(
                 message="Security violation: Invalid file path traversal detected.",
                 details={"path": relative_path},
-            ) from exc
-        return target
+            )
+        return Path(normalized)
 
     def validate_pdf_stream(
         self,
@@ -149,12 +145,14 @@ class StorageService:
         self,
         file_obj: BinaryIO,
         original_filename: str,
+        document_id: str | uuid.UUID | None = None,
+        version_id: str | uuid.UUID | None = None,
         declared_mime: str | None = None,
     ) -> StoredFileInfo:
-        """Validate and atomically store a PDF file into the managed storage directory.
+        """Validate and atomically store a PDF file into the managed storage provider.
 
-        Returns:
-            StoredFileInfo containing the safe relative storage path and SHA-256.
+        Uses immutable structured object keys:
+        `documents/{document_id}/versions/{version_id}/{safe_uuid}.pdf`
         """
         file_hash, file_size = self.validate_pdf_stream(
             file_obj=file_obj,
@@ -162,78 +160,50 @@ class StorageService:
             declared_mime=declared_mime,
         )
 
-        # Generate a safe UUID-based storage filename to prevent collisions and path injection
-        storage_filename = f"{uuid.uuid4().hex}.pdf"
-        target_path = self.resolve_path(storage_filename)
+        safe_uuid = uuid.uuid4().hex
+        if document_id is not None and version_id is not None:
+            object_key = f"documents/{document_id}/versions/{version_id}/{safe_uuid}.pdf"
+        elif document_id is not None:
+            object_key = f"documents/{document_id}/{safe_uuid}.pdf"
+        else:
+            object_key = f"{safe_uuid}.pdf"
 
-        # Write to a temporary file in the storage directory, then atomically rename
-        temp_file = None
-        try:
-            with tempfile.NamedTemporaryFile(
-                dir=self.base_dir,
-                delete=False,
-                prefix="tmp_upload_",
-                suffix=".pdf",
-            ) as tmp:
-                temp_file = Path(tmp.name)
-                file_obj.seek(0)
-                shutil.copyfileobj(file_obj, tmp)
+        file_obj.seek(0)
+        persisted_key = self.provider.store_file(
+            file_obj=file_obj,
+            object_key=object_key,
+            content_type="application/pdf",
+        )
 
-            # Atomic rename / replace
-            temp_file.replace(target_path)
-            logger.info(
-                "Stored file '%s' (hash: %s, %d bytes) as '%s'",
-                Path(original_filename).name,
-                file_hash[:12],
-                file_size,
-                storage_filename,
-            )
+        return StoredFileInfo(
+            storage_path=persisted_key,
+            file_hash=file_hash,
+            file_size_bytes=file_size,
+            original_filename=Path(original_filename).name,
+            mime_type="application/pdf",
+        )
 
-            return StoredFileInfo(
-                storage_path=storage_filename,
-                file_hash=file_hash,
-                file_size_bytes=file_size,
-                original_filename=Path(original_filename).name,
-                mime_type="application/pdf",
-            )
-        except Exception as exc:
-            logger.error("Failed to persist file '%s' to storage: %s", original_filename, exc)
-            if temp_file and temp_file.exists():
-                try:
-                    temp_file.unlink()
-                except OSError:
-                    pass
-            if target_path.exists():
-                try:
-                    target_path.unlink()
-                except OSError:
-                    pass
-            raise StorageError(
-                message="Failed to persist uploaded document to filesystem.",
-                details={"error": str(exc)},
-            ) from exc
+    def get_file_bytes(self, storage_path: str) -> bytes:
+        """Retrieve binary bytes of the stored PDF."""
+        return self.provider.get_file_bytes(storage_path)
 
-    def delete_file(self, relative_path: str) -> bool:
-        """Safely remove a file from the managed storage directory during rollback/cleanup.
+    def delete_file(self, storage_path: str) -> bool:
+        """Safely remove a file from the managed storage provider during rollback/cleanup."""
+        return self.provider.delete_file(storage_path)
 
-        Returns:
-            True if deleted, False if file did not exist.
-        """
-        try:
-            target = self.resolve_path(relative_path)
-            if target.is_file():
-                target.unlink()
-                logger.info("Successfully deleted stored file: %s", relative_path)
-                return True
-            return False
-        except Exception as exc:
-            logger.warning("Error deleting stored file '%s': %s", relative_path, exc)
-            return False
+    def file_exists(self, storage_path: str) -> bool:
+        """Verify whether a stored file exists within the storage provider."""
+        return self.provider.file_exists(storage_path)
 
-    def file_exists(self, relative_path: str) -> bool:
-        """Verify whether a stored file exists within the storage directory."""
-        try:
-            target = self.resolve_path(relative_path)
-            return target.is_file()
-        except Exception:
-            return False
+    def generate_presigned_download_url(
+        self,
+        storage_path: str,
+        expires_in_seconds: int = 600,
+        original_filename: str | None = None,
+    ) -> str:
+        """Generate a secure, time-limited presigned download URL."""
+        return self.provider.generate_presigned_download_url(
+            object_key=storage_path,
+            expires_in_seconds=expires_in_seconds,
+            original_filename=original_filename,
+        )

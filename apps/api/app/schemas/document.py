@@ -43,6 +43,8 @@ class DocumentVersionSummary(BaseModel):
     page_count: int = Field(..., description="Physical page count")
     extraction_status: str = Field(..., description="Extraction lifecycle status")
     extraction_method: str | None = Field(default=None, description="Extraction engine used")
+    is_deleted: bool = Field(default=False, description="Soft-deletion status")
+    deleted_at: datetime | None = Field(default=None, description="Timestamp of soft-deletion")
     created_at: datetime = Field(..., description="Version creation timestamp")
 
 
@@ -121,3 +123,53 @@ class DocumentListResponse(BaseModel):
 
     total: int = Field(..., ge=0)
     items: list[DocumentListItem]
+
+
+class PresignedDownloadResponse(BaseModel):
+    """Presigned time-limited download URL response for a document version."""
+
+    model_config = ConfigDict(from_attributes=True, frozen=True)
+
+    download_url: str = Field(..., description="Presigned temporary download URL")
+    expires_in: int = Field(..., description="URL validity lifetime in seconds")
+    filename: str = Field(..., description="Original filename of the document")
+    document_id: uuid.UUID = Field(..., description="Logical document UUID")
+    version_number: int = Field(..., description="Document version number")
+
+
+class DocumentVersionSoftDeleteResponse(BaseModel):
+    """Response payload for soft-deleting a document version."""
+
+    model_config = ConfigDict(from_attributes=True, frozen=True)
+
+    message: str = Field(default="Document version soft-deleted successfully.")
+    document_id: uuid.UUID
+    version_number: int
+    is_deleted: bool = True
+    deleted_at: datetime
+    chunks_removed: int
+
+
+class DocumentVersionRestoreResponse(BaseModel):
+    """Response payload for restoring a soft-deleted document version."""
+
+    model_config = ConfigDict(from_attributes=True, frozen=True)
+
+    message: str = Field(default="Document version restored successfully.")
+    document_id: uuid.UUID
+    version_number: int
+    is_deleted: bool = False
+    chunk_count: int
+    extraction_status: str
+
+
+class DocumentVersionRetryResponse(BaseModel):
+    """Response payload for retrying a failed document version extraction."""
+
+    model_config = ConfigDict(from_attributes=True, frozen=True)
+
+    message: str = Field(default="Document version extraction re-processed successfully.")
+    document_id: uuid.UUID
+    version_number: int
+    extraction_status: str
+    chunk_count: int
