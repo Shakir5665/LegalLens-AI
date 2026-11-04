@@ -30,8 +30,16 @@ class Settings(BaseSettings):
     llm_max_retries: int = 2
     llm_temperature: float = 0.2
 
-    # Database & Frontend Placeholders (Phase 3 & Phase 10)
+    # Database Configuration (Phase 3 Database & Document Intelligence)
     database_url: str | None = None
+    db_pool_size: int = 5
+    db_max_overflow: int = 10
+    db_pool_timeout: float = 30.0
+    db_pool_recycle: int = 1800
+    db_echo: bool = False
+    db_connect_timeout: float = 10.0
+
+    # Frontend Placeholders (Phase 10)
     cors_origins: str = "http://localhost:5173"
 
 

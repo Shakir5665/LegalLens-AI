@@ -58,6 +58,38 @@ class ValidationException(AppException):
         )
 
 
+class DatabaseConnectionError(AppException):
+    """Raised when the database connection cannot be established or verified."""
+
+    def __init__(
+        self,
+        message: str = "Database connection could not be established.",
+        details: Any = None,
+    ) -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            error_code="DATABASE_CONNECTION_ERROR",
+            details=details,
+        )
+
+
+class DatabaseConfigurationError(AppException):
+    """Raised when required database configuration is missing or invalid."""
+
+    def __init__(
+        self,
+        message: str = "Database configuration is missing or invalid.",
+        details: Any = None,
+    ) -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error_code="DATABASE_CONFIGURATION_ERROR",
+            details=details,
+        )
+
+
 async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
     """Handle custom application exceptions."""
     logger.warning("Application exception [%s] on %s: %s", exc.error_code, request.url.path, exc.message)

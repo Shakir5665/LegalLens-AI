@@ -1,8 +1,11 @@
 import uuid
+from collections.abc import Generator
 from typing import Annotated
 from fastapi import Depends, Header
+from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings
+from app.db.session import get_engine, get_session_factory
 from app.providers.base import LLMProvider
 from app.providers.gemini_provider import GeminiProvider
 from app.services.legal_source_service import LegalSourceService
@@ -50,3 +53,16 @@ def get_request_id(
 ) -> str:
     """Dependency returning client request ID or generating a fresh UUID."""
     return x_request_id or str(uuid.uuid4())
+
+
+def get_db(
+    settings: Annotated[Settings, Depends(get_app_settings)],
+) -> Generator[Session, None, None]:
+    """Dependency providing a SQLAlchemy database session with automatic lifecycle cleanup."""
+    engine = get_engine(settings=settings)
+    session_factory = get_session_factory(engine)
+    session = session_factory()
+    try:
+        yield session
+    finally:
+        session.close()
