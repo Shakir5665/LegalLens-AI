@@ -8,8 +8,12 @@ from app.core.config import Settings, get_settings
 from app.db.session import get_engine, get_session_factory
 from app.providers.base import LLMProvider
 from app.providers.gemini_provider import GeminiProvider
+from app.services.document_service import DocumentService
+from app.services.legal_chunking_service import LegalChunkingService
 from app.services.legal_source_service import LegalSourceService
 from app.services.llm_service import LLMService
+from app.services.pdf_extraction_service import PDFExtractionService
+from app.services.storage_service import StorageService
 
 # Singleton service instance for in-memory Phase 1 dependency injection
 _legal_source_service = LegalSourceService()
@@ -66,3 +70,33 @@ def get_db(
         yield session
     finally:
         session.close()
+
+
+def get_storage_service(
+    settings: Annotated[Settings, Depends(get_app_settings)],
+) -> StorageService:
+    """Dependency providing the file validation and local storage service."""
+    return StorageService(settings=settings)
+
+
+def get_pdf_extraction_service() -> PDFExtractionService:
+    """Dependency providing PyMuPDF text and metadata extraction service."""
+    return PDFExtractionService()
+
+
+def get_legal_chunking_service() -> LegalChunkingService:
+    """Dependency providing structure-aware legal chunking service."""
+    return LegalChunkingService()
+
+
+def get_document_service(
+    storage: Annotated[StorageService, Depends(get_storage_service)],
+    extractor: Annotated[PDFExtractionService, Depends(get_pdf_extraction_service)],
+    chunker: Annotated[LegalChunkingService, Depends(get_legal_chunking_service)],
+) -> DocumentService:
+    """Dependency providing the legal document ingestion and version orchestration service."""
+    return DocumentService(
+        storage_service=storage,
+        pdf_extractor=extractor,
+        chunker=chunker,
+    )

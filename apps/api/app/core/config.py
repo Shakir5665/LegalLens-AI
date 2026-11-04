@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     db_echo: bool = False
     db_connect_timeout: float = 10.0
 
+    # Storage Configuration (Phase 3 Document Storage & Ingestion)
+    storage_dir: str = "storage"
+    max_upload_size_bytes: int = 25 * 1024 * 1024  # 25 MB default
+
     # Frontend Placeholders (Phase 10)
     cors_origins: str = "http://localhost:5173"
 

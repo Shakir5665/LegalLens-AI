@@ -1,9 +1,9 @@
 # LegalLens AI — Backend Architecture & Engineering Guide
 
 **Module:** `apps/api`  
-**Runtime:** Python 3.12.10 | FastAPI | Pydantic v2 | Google GenAI SDK (`google-genai==1.2.0`)  
-**Status:** Phase 2 Complete (LLM Engineering)  
-**Last Updated:** 3 November 2026
+**Runtime:** Python 3.12.10 | FastAPI | Pydantic v2 | SQLAlchemy 2.x | PostgreSQL/Psycopg 3 | PyMuPDF | Alembic  
+**Status:** Phase 3 Complete (Database & Document Intelligence)  
+**Last Updated:** 4 November 2026
 
 ---
 
@@ -388,7 +388,125 @@ During live testing, initial observation showed prompt tokens (319) + candidate 
 
 ---
 
-## 6. Implemented Endpoints (HTTP Transport)
+## 6. Database & Document Intelligence Architecture (Phase 3 Core)
+
+### 6.1 Relational Schema Architecture
+
+LegalLens AI implements a normalized three-tier relational schema in PostgreSQL designed for immutable document versioning and exact legal evidence traceability ([ADR-003](../decisions/architecture-decisions.md#adr-003-use-postgresql-as-the-primary-database)):
+
+```mermaid
+erDiagram
+    DOCUMENTS ||--o{ DOCUMENT_VERSIONS : "has versions (1:N)"
+    DOCUMENT_VERSIONS ||--o{ DOCUMENT_CHUNKS : "has passages (1:N)"
+
+    DOCUMENTS {
+        uuid id PK "UUID primary key"
+        varchar title "Legal document title"
+        varchar document_type "statute | regulation | judicial_decision"
+        varchar jurisdiction "Sri Lanka"
+        varchar legal_domain "Employment Law"
+        varchar source_authenticity "VerifiedOfficial | Unverified"
+        text description "Optional summary"
+        timestamptz created_at "UTC creation timestamp"
+        timestamptz updated_at "UTC update timestamp"
+    }
+
+    DOCUMENT_VERSIONS {
+        uuid id PK "UUID primary key"
+        uuid document_id FK "References documents.id (CASCADE)"
+        integer version_number "Sequential version (1, 2, ...)"
+        varchar original_filename "Uploaded file name"
+        varchar storage_path "UUID storage filename"
+        varchar file_hash "SHA-256 hex checksum"
+        varchar mime_type "application/pdf"
+        bigint file_size_bytes "File size in bytes"
+        integer page_count "Total physical pages"
+        varchar extraction_status "completed | scanned_only | failed"
+        varchar extraction_method "pymupdf_native_text"
+        jsonb extracted_metadata "Embedded PDF technical metadata"
+        timestamptz created_at "UTC creation timestamp"
+    }
+
+    DOCUMENT_CHUNKS {
+        uuid id PK "UUID primary key"
+        uuid document_version_id FK "References document_versions.id (CASCADE)"
+        integer chunk_index "Deterministic zero-based sequence index"
+        text chunk_text "Non-empty legal passage text"
+        varchar part_reference "Identified Part (e.g. Part IVA)"
+        varchar chapter_reference "Identified Chapter (e.g. Chapter II)"
+        varchar section_reference "Identified Section (e.g. Section 31B)"
+        varchar subsection_reference "Identified Subsection (e.g. (1))"
+        varchar paragraph_reference "Identified Paragraph (e.g. (a))"
+        integer page_number "1-based physical start page"
+        integer page_end "Physical end page if multi-page span"
+        jsonb structural_metadata "Strategy and heading details"
+        varchar content_hash "SHA-256 of normalized text"
+        timestamptz created_at "UTC creation timestamp"
+    }
+```
+
+### 6.2 End-to-End Document Ingestion Pipeline Lifecycle
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Client
+    participant Router as API Router (/api/v1/documents)
+    participant Storage as StorageService (storage_service.py)
+    participant Extractor as PDFExtractionService (pdf_extraction_service.py)
+    participant Chunker as LegalChunkingService (legal_chunking_service.py)
+    participant DB as PostgreSQL (Neon)
+
+    Client->>Router: POST /api/v1/documents (multipart: file, title, type, auth)
+    Router->>Storage: validate_pdf_stream(file_stream)
+    alt Invalid Header or Oversize
+        Storage-->>Router: FileValidationError (HTTP 422)
+        Router-->>Client: 422 Unprocessable Entity
+    else Stream Valid
+        Storage-->>Router: (sha256_hash, file_size)
+    end
+
+    Router->>DB: Check existing document_id and duplicate SHA-256
+    alt Duplicate SHA-256 for Same Document
+        DB-->>Router: Return existing DocumentVersion
+        Router-->>Client: 200/201 OK (existing version metadata, no duplicate)
+    end
+
+    Router->>Storage: store_file(file_stream) -> atomic write to storage/<uuid>.pdf
+    Storage-->>Router: StoredFileInfo(storage_path, hash)
+
+    Router->>Extractor: extract(storage_path) via PyMuPDF
+    Extractor-->>Router: PDFExtractionResult(pages, page_count, metadata, is_scanned_only)
+
+    alt is_scanned_only == True
+        Router->>DB: Commit DocumentVersion(status='scanned_only')
+        Router-->>Client: 422 Unprocessable Entity (SCANNED_PDF_UNSUPPORTED)
+    else Native Text Extracted
+        Router->>Chunker: chunk_document(PDFExtractionResult)
+        alt Statutory Sections Found
+            Chunker->>Chunker: Structure-aware chunking (Part, Section, Subsection, Page)
+        else Unstructured Text
+            Chunker->>Chunker: Deterministic sliding window fallback (1000 chars, 150 overlap)
+        end
+        Chunker-->>Router: list[LegalChunk]
+
+        Router->>DB: Atomic Transaction: Persist Document, DocumentVersion, DocumentChunks
+        DB-->>Router: Commit Success
+        Router-->>Client: 201 Created (DocumentUploadResponse)
+    end
+```
+
+### 6.3 Database Migrations & Versioning Strategy
+
+Database schemas are strictly managed using **Alembic** rather than ad-hoc table creation.
+- Migration scripts reside in `apps/api/alembic/versions/`.
+- `env.py` dynamically sources configuration from `get_settings().database_url` with credential masking in logs.
+- Initial migration `a62920676c1e_create_phase_3_document_tables.py` establishes tables, foreign keys with `CASCADE` deletes, check constraints (`version_number > 0`, `page_number >= 1`, non-empty text), and performance indexes (`file_hash`, `section_reference`, `document_version_id + page_number`).
+- Migration lifecycle verified against PostgreSQL: `upgrade head` $\to$ `current` $\to$ `downgrade -1` $\to$ `upgrade head`.
+
+---
+
+## 7. Implemented Endpoints (HTTP Transport)
 
 | Method | Endpoint | Description | Status Codes | Response Model |
 | :--- | :--- | :--- | :--- | :--- |
@@ -397,57 +515,63 @@ During live testing, initial observation showed prompt tokens (319) + candidate 
 | `GET` | `/api/v1/sources` | List authoritative Sri Lankan legal sources (optional `?category=` filter) | `200` | `LegalSourceListResponse` |
 | `GET` | `/api/v1/sources/{source_id}` | Retrieve specific legal source by slug | `200`, `404` | `LegalSourceResponse` |
 | `POST` | `/api/v1/sources/validate-reference` | Validate statutory section reference format | `200`, `404`, `422` | `StatuteReferenceValidationResponse` |
+| `POST` | `/api/v1/documents` | Ingest legal PDF with structure-aware chunking and storage | `201`, `404`, `422` | `DocumentUploadResponse` |
+| `GET` | `/api/v1/documents` | List catalogued legal documents with version counts | `200` | `DocumentListResponse` |
+| `GET` | `/api/v1/documents/{document_id}` | Retrieve document metadata and version summaries | `200`, `404` | `DocumentDetailResponse` |
+| `GET` | `/api/v1/documents/{document_id}/versions/{version_number}/chunks` | Retrieve extracted chunks with legal hierarchy & page bounds | `200`, `404` | `DocumentVersionChunksResponse` |
 | `GET` | `/docs` | Interactive Swagger / OpenAPI documentation | `200` | HTML UI |
 | `GET` | `/redoc` | Interactive ReDoc documentation | `200` | HTML UI |
 
 ---
 
-## 7. Setup & Execution Commands
+## 8. Setup & Execution Commands
 
-### 7.1 Environment Activation
+### 8.1 Environment Activation
 From repository root:
 ```powershell
 .\venv\Scripts\Activate.ps1
 python --version   # Must be Python 3.12.x
 ```
 
-### 7.2 Running Automated Tests
+### 8.2 Database Migrations (Alembic)
 ```powershell
-.\venv\Scripts\python.exe -m pytest -v
-```
-Expected output:
-```text
-======================== 72 passed, 1 skipped in 0.28s ========================
+$env:PYTHONPATH="apps/api"
+.\venv\Scripts\alembic.exe upgrade head
+.\venv\Scripts\alembic.exe current
 ```
 
-### 7.3 Running the Development Server
+### 8.3 Running Automated Tests
+```powershell
+# Run complete test suite (121 passed, 1 skipped)
+.\venv\Scripts\python.exe -m pytest -v
+
+# Run live PostgreSQL integration verification script
+$env:PYTHONPATH="apps/api"
+.\venv\Scripts\python.exe apps/api/scripts/verify_phase3_postgres.py
+```
+
+### 8.4 Running the Development Server
 ```powershell
 .\venv\Scripts\uvicorn.exe app.main:app --app-dir apps/api --reload --port 8000
 ```
 
-### 7.4 Running the Manual LLM Test Script
-```powershell
-$env:GEMINI_API_KEY="your-api-key"
-.\venv\Scripts\python.exe apps/api/scripts/manual_test_llm.py --query "Unfair dismissal claim under TEWA"
-```
+---
+
+## 9. Important Architectural Decisions & Trade-offs
+
+1. **Source Authenticity Non-Self-Certification Gate:** Arbitrary client uploads cannot self-certify as `VerifiedOfficial` or `VerifiedSecondary`. Uploads default to `Unverified` (or `SyntheticDemo` for test fixtures). Any upload attempting to declare official authenticity without authoritative provenance is rejected with HTTP 422 `VALIDATION_ERROR`. Official status requires the authoritative legal verification workflow.
+2. **Native-Text First & Scanned PDF Rejection ([ADR-010](../decisions/architecture-decisions.md#adr-010-use-native-text-pdf-extraction-initially)):** OCR is deferred to keep the system deterministic and free from heavy native binary dependencies (Tesseract). Scanned PDFs are flagged and persisted with `scanned_only` status, returning HTTP 422.
+3. **Three-Tier Immutability Architecture:** Separating logical `Document` from physical `DocumentVersion` ensures historical statute amendments, revisions, and gazette printings can be ingested without destroying earlier evidence.
+4. **Evidence Traceability Guarantee:** Chunks store exact 1-based start page (`page_number`) and end page (`page_end` when spanning multiple pages) and normalized SHA-256 hashes, preventing hallucinations in future citation verification (Phase 8).
+5. **Content-Based File Validation:** The server strictly checks `%PDF-` magic bytes and opens files with PyMuPDF rather than trusting user MIME headers.
+6. **UUID-Based Storage Paths:** Storage filenames use random UUIDs within a restricted `storage_dir`, completely eliminating path traversal vulnerabilities.
+7. **Statutory Heading Recognition with Continuation & Fallback:** Parses Sri Lankan statutory formats (`Part IVA`, `Chapter II`, `Section 31B`, `(1)`, `(a)`), supports multi-page section continuation headers (e.g. `Section 31B. Continued.`), and falls back to bounded sliding-window chunking for unstructured legal notices.
 
 ---
 
-## 8. Important Architectural Decisions & Trade-offs
+## 10. Known Limitations & Roadmap Boundaries
 
-1. **Pure Standard Library Logging:** We utilized standard Python `logging` with structured formatting instead of introducing heavyweight external logging frameworks (`loguru`, `structlog`).
-2. **Pydantic Settings with Singleton Caching:** Configuration is validated via `pydantic-settings` and memoized with `@lru_cache`, ensuring zero parsing overhead per request.
-3. **Traceback Masking Middleware:** To enforce [ADR-014](../decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation), unhandled 500 errors are trapped by an outer HTTP middleware and sanitized into `ErrorResponse`.
-4. **Single-Provider Architecture with Protocol:** In adherence to Phase 2 guidelines, we integrated Gemini exclusively via `GeminiProvider` while maintaining a lightweight `LLMProvider` Protocol, intentionally avoiding premature multi-provider complexity.
-5. **Strict Pydantic v2 Output Validation:** Model output is treated as untrusted text. We parse and validate via `model_validate_json()`, raising typed `LLMResponseValidationError` on syntax or schema errors.
-6. **Thinking-Token Accounting in Cost Calculations:** To prevent under-reporting operational costs on reasoning models (Gemini 2.5 Flash), `thoughtsTokenCount` is explicitly tracked and billed at standard output rates.
-7. **Developer Manual Testing Script over Public Endpoint:** In accordance with project requirements, no public `/analyze-query` HTTP endpoint was added. Testing is conducted via unit tests (`FakeLLMProvider`) and developer CLI (`manual_test_llm.py`).
-
----
-
-## 9. Known Limitations & Roadmap Boundaries
-
-- **Thinking Budget Control:** `thinking_budget` configuration parameter is deferred to Phase 7 (Agentic AI Engineering) when agent workflow budgets are introduced.
-- **Provider-Side Context Caching:** Token pricing for cached tokens ($0.03/1M cached tokens) is supported in the pricing registry. However, provider-side Gemini context caching requires a minimum input threshold of 32,768 tokens and incurs storage TTL fees. Provider-side context caching is strictly optional and will only be evaluated in a later phase (such as Phase 7 or Phase 11) if workload size and token economics justify it. It is not scheduled for implementation in Phase 3 or Phase 4 (see [Caching Strategy](caching-strategy.md) and [ADR-015](../decisions/architecture-decisions.md#adr-015-introduce-a-version-aware-application-level-caching-layer)).
-- **In-Memory Catalog:** Legal source catalog remains in-memory until Phase 3 (Database & Document Intelligence) introduces PostgreSQL and pgvector.
-- **Implementation Boundary:** Phase 0, Phase 1, and Phase 2 are complete. Phase 3 (Database & Document Intelligence) is currently in progress. Core capabilities scheduled for Phase 4 and later (embeddings, pgvector semantic search, hybrid retrieval pipelines, LangGraph agent workflows, citation verification, and React frontend) remain planned target architecture and are strictly not yet implemented.
+- **Single-Tenant / Development Scope (Document Ownership):** In accordance with the 12-week roadmap, user-level ownership, authentication, and multi-tenant access control boundaries are scheduled for Phase 11 (Production Engineering). Current document ingestion and inspection APIs catalog public Sri Lankan legal authorities and are **not production-ready for private, confidential, or multi-user tenant documents**.
+- **OCR Unsupported:** Scanned image-only PDFs without native text layers cannot be extracted; they are persisted as `scanned_only` and rejected with HTTP 422.
+- **DOCX and TXT Ingestion:** In adherence to Phase 3 milestone requirements, PDF ingestion is implemented completely. DOCX and plain-text ingestion remain planned for later phases.
+- **Embeddings & Vector Search:** Phase 3 persists text and structural references in PostgreSQL. Vector embeddings and pgvector similarity search belong to Phase 4.

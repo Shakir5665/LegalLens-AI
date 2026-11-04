@@ -1,4 +1,4 @@
-﻿# Environment variables and secrets
+# Environment variables and secrets
 .env
 .env.*
 !.env.example
@@ -26,6 +26,12 @@ node_modules/
 # Build outputs
 dist/
 build/
+
+# Local file storage and SQLite testing databases
+storage/
+*.db
+*.sqlite
+*.sqlite3
 
 # IDE and operating system files
 .idea/

@@ -1,3 +1,12 @@
+from app.schemas.document import (
+    ChunkResponse,
+    DocumentDetailResponse,
+    DocumentListItem,
+    DocumentListResponse,
+    DocumentUploadResponse,
+    DocumentVersionChunksResponse,
+    DocumentVersionSummary,
+)
 from app.schemas.health import HealthResponse, SystemStatusResponse
 from app.schemas.legal_source import (
     LegalSourceCategory,
@@ -17,4 +26,11 @@ __all__ = [
     "LegalSourceListResponse",
     "StatuteReferenceQuery",
     "StatuteReferenceValidationResponse",
+    "DocumentUploadResponse",
+    "DocumentVersionSummary",
+    "DocumentDetailResponse",
+    "ChunkResponse",
+    "DocumentVersionChunksResponse",
+    "DocumentListItem",
+    "DocumentListResponse",
 ]

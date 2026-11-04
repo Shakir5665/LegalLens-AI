@@ -90,6 +90,70 @@ class DatabaseConfigurationError(AppException):
         )
 
 
+class FileValidationError(AppException):
+    """Raised when an uploaded file fails integrity, format, or size validation."""
+
+    def __init__(
+        self,
+        message: str = "Uploaded file failed validation constraints.",
+        details: Any = None,
+    ) -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            error_code="FILE_VALIDATION_ERROR",
+            details=details,
+        )
+
+
+class StorageError(AppException):
+    """Raised when file storage operations fail."""
+
+    def __init__(
+        self,
+        message: str = "An error occurred during file storage operations.",
+        details: Any = None,
+    ) -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            error_code="STORAGE_ERROR",
+            details=details,
+        )
+
+
+class ScannedPDFException(AppException):
+    """Raised when an uploaded PDF is scanned-only without native extractable text."""
+
+    def __init__(
+        self,
+        message: str = "Scanned-only PDF detected. Native text extraction could not find readable text; OCR is not supported in Phase 3.",
+        details: Any = None,
+    ) -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            error_code="SCANNED_PDF_UNSUPPORTED",
+            details=details,
+        )
+
+
+class DocumentVersionConflictError(AppException):
+    """Raised when a concurrent or conflicting document version operation occurs."""
+
+    def __init__(
+        self,
+        message: str = "Document version conflict detected.",
+        details: Any = None,
+    ) -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_409_CONFLICT,
+            error_code="DOCUMENT_VERSION_CONFLICT",
+            details=details,
+        )
+
+
 async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
     """Handle custom application exceptions."""
     logger.warning("Application exception [%s] on %s: %s", exc.error_code, request.url.path, exc.message)
