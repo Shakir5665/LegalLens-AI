@@ -108,3 +108,106 @@ def test_delete_file_cleanup(storage):
     deleted = storage.delete_file(stored.storage_path)
     assert deleted is True
     assert not storage.file_exists(stored.storage_path)
+
+
+def test_immutable_hierarchical_object_key_generation(storage):
+    """Task 3.D: Verify hierarchical key documents/{document_id}/versions/{version_id}/{uuid}.pdf."""
+    import uuid
+    pdf_bytes = make_valid_pdf_bytes("Hierarchical Storage Key Test")
+    bio = io.BytesIO(pdf_bytes)
+
+    doc_id = uuid.uuid4()
+    ver_id = uuid.uuid4()
+
+    stored = storage.store_file(
+        bio,
+        original_filename="act.pdf",
+        document_id=doc_id,
+        version_id=ver_id,
+    )
+
+    expected_prefix = f"documents/{doc_id}/versions/{ver_id}/"
+    assert stored.storage_path.startswith(expected_prefix)
+    assert stored.storage_path.endswith(".pdf")
+    assert storage.file_exists(stored.storage_path)
+
+
+def test_presigned_url_generation_local(storage):
+    """Task 3.B: Verify generating and verifying presigned download URLs with LocalStorageProvider."""
+    pdf_bytes = make_valid_pdf_bytes("Presigned Local Test")
+    bio = io.BytesIO(pdf_bytes)
+    stored = storage.store_file(bio, original_filename="my_statute.pdf")
+
+    url = storage.generate_presigned_download_url(
+        storage_path=stored.storage_path,
+        expires_in_seconds=600,
+        original_filename="my_statute.pdf",
+    )
+    assert "/api/v1/documents/download-file?" in url
+    assert f"key={stored.storage_path}" in url or "key=" in url
+    assert "expires=" in url
+    assert "signature=" in url
+
+
+def test_neon_storage_provider_with_mock_s3():
+    """Task 3.A: Verify NeonStorageProvider operations using a mocked S3 client."""
+    from unittest.mock import MagicMock
+    from app.storage.neon import NeonStorageProvider
+
+    mock_s3 = MagicMock()
+    # Mock get_object body
+    mock_body = MagicMock()
+    mock_body.read.return_value = b"%PDF-1.4 Mock Neon S3 Bytes"
+    mock_s3.get_object.return_value = {"Body": mock_body}
+    mock_s3.generate_presigned_url.return_value = "https://neon-storage.ap-southeast-1.amazonaws.com/test-bucket/doc.pdf?sig=123"
+
+    settings = Settings(
+        storage_provider="neon",
+        neon_storage_bucket="legallens-private-docs",
+        neon_storage_endpoint="https://s3.ap-southeast-1.amazonaws.com",
+        neon_storage_access_key="mock_key",
+        neon_storage_secret_key="mock_secret",
+        neon_storage_region="ap-southeast-1",
+    )
+
+    provider = NeonStorageProvider(settings=settings, s3_client=mock_s3)
+    storage_svc = StorageService(settings=settings, provider=provider)
+
+    pdf_bytes = make_valid_pdf_bytes("Neon S3 Upload Test")
+    bio = io.BytesIO(pdf_bytes)
+
+    # 1. Store file
+    stored = storage_svc.store_file(
+        bio,
+        original_filename="s3_doc.pdf",
+        document_id="doc-123",
+        version_id="ver-456",
+    )
+    assert stored.storage_path.startswith("documents/doc-123/versions/ver-456/")
+    mock_s3.put_object.assert_called_once()
+
+    # 2. Get file bytes
+    retrieved = storage_svc.get_file_bytes(stored.storage_path)
+    assert retrieved == b"%PDF-1.4 Mock Neon S3 Bytes"
+    mock_s3.get_object.assert_called_once_with(
+        Bucket="legallens-private-docs",
+        Key=stored.storage_path,
+    )
+
+    # 3. Generate presigned URL
+    url = storage_svc.generate_presigned_download_url(
+        storage_path=stored.storage_path,
+        expires_in_seconds=600,
+        original_filename="download.pdf",
+    )
+    assert url.startswith("https://")
+    mock_s3.generate_presigned_url.assert_called_once()
+
+    # 4. Delete file
+    mock_s3.delete_object.return_value = {}
+    deleted = storage_svc.delete_file(stored.storage_path)
+    assert deleted is True
+    mock_s3.delete_object.assert_called_once_with(
+        Bucket="legallens-private-docs",
+        Key=stored.storage_path,
+    )

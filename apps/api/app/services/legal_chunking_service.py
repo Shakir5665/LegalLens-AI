@@ -15,10 +15,10 @@ from app.services.pdf_extraction_service import PDFExtractionResult, PageExtract
 logger = get_logger("app.services.chunking")
 
 # Sri Lankan legal structural regular expressions
-PART_REGEX = re.compile(r"^\s*PART\s+([0-9IVXLCDM]+[A-Z]?)\b", re.IGNORECASE)
-CHAPTER_REGEX = re.compile(r"^\s*CHAPTER\s+([0-9IVXLCDM]+[A-Z]?)\b", re.IGNORECASE)
+PART_REGEX = re.compile(r"^\s*PART\s*[-–—]?\s*([0-9IVXLCDM]+[A-Z]?)\b", re.IGNORECASE)
+CHAPTER_REGEX = re.compile(r"^\s*CHAPTER\s*[-–—]?\s*([0-9IVXLCDM]+[A-Z]?)\b", re.IGNORECASE)
 SECTION_HEADING_REGEX = re.compile(
-    r"^\s*(?:(?:Section|SECTION)\s+([0-9]+[A-Z]?)|([0-9]+[A-Z]?)\.)\s*(.*)$"
+    r"^\s*(?:(?:Section|SECTION|Sec\.|SEC\.)\s+([0-9]+[A-Z]?)|([0-9]+[A-Z]?)\.)\s*(.*)$"
 )
 SUBSECTION_REGEX = re.compile(r"^\s*(\([0-9]+\))\s*(.*)$")
 PARAGRAPH_REGEX = re.compile(r"^\s*(\([a-z]\)|\([ivxlcdm]+\))\s*(.*)$")

@@ -515,10 +515,15 @@ Database schemas are strictly managed using **Alembic** rather than ad-hoc table
 | `GET` | `/api/v1/sources` | List authoritative Sri Lankan legal sources (optional `?category=` filter) | `200` | `LegalSourceListResponse` |
 | `GET` | `/api/v1/sources/{source_id}` | Retrieve specific legal source by slug | `200`, `404` | `LegalSourceResponse` |
 | `POST` | `/api/v1/sources/validate-reference` | Validate statutory section reference format | `200`, `404`, `422` | `StatuteReferenceValidationResponse` |
-| `POST` | `/api/v1/documents` | Ingest legal PDF with structure-aware chunking and storage | `201`, `404`, `422` | `DocumentUploadResponse` |
-| `GET` | `/api/v1/documents` | List catalogued legal documents with version counts | `200` | `DocumentListResponse` |
+| `POST` | `/api/v1/documents` | Ingest legal PDF with structure-aware chunking and storage | `201`, `404`, `409`, `422` | `DocumentUploadResponse` |
+| `GET` | `/api/v1/documents` | List catalogued legal documents with active version counts | `200` | `DocumentListResponse` |
 | `GET` | `/api/v1/documents/{document_id}` | Retrieve document metadata and version summaries | `200`, `404` | `DocumentDetailResponse` |
 | `GET` | `/api/v1/documents/{document_id}/versions/{version_number}/chunks` | Retrieve extracted chunks with legal hierarchy & page bounds | `200`, `404` | `DocumentVersionChunksResponse` |
+| `GET` | `/api/v1/documents/{document_id}/versions/{version_number}/download` | Generate time-limited presigned URL for downloading original PDF | `200`, `404` | `PresignedDownloadResponse` |
+| `GET` | `/api/v1/documents/download-file` | Stream locally stored PDF object via signed URL verification | `200`, `403`, `404` | File stream (`application/pdf`) |
+| `DELETE` | `/api/v1/documents/{document_id}/versions/{version_number}` | Soft-delete a document version & purge chunks from active DB | `200`, `404` | `DocumentVersionSoftDeleteResponse` |
+| `POST` | `/api/v1/documents/{document_id}/versions/{version_number}/restore` | Restore soft-deleted document version and recover its chunks | `200`, `404` | `DocumentVersionRestoreResponse` |
+| `POST` | `/api/v1/documents/{document_id}/versions/{version_number}/retry` | Re-process extraction and chunking for a failed document version | `200`, `404` | `DocumentVersionRetryResponse` |
 | `GET` | `/docs` | Interactive Swagger / OpenAPI documentation | `200` | HTML UI |
 | `GET` | `/redoc` | Interactive ReDoc documentation | `200` | HTML UI |
 
@@ -542,12 +547,11 @@ $env:PYTHONPATH="apps/api"
 
 ### 8.3 Running Automated Tests
 ```powershell
-# Run complete test suite (121 passed, 1 skipped)
+# Run complete test suite (127 passed, 1 skipped)
 .\venv\Scripts\python.exe -m pytest -v
 
-# Run live PostgreSQL integration verification script
-$env:PYTHONPATH="apps/api"
-.\venv\Scripts\python.exe apps/api/scripts/verify_phase3_postgres.py
+# Run live PostgreSQL integration verification
+.\venv\Scripts\python.exe -m pytest apps/api/tests/test_postgres_document_integration.py -v
 ```
 
 ### 8.4 Running the Development Server
@@ -571,7 +575,8 @@ $env:PYTHONPATH="apps/api"
 
 ## 10. Known Limitations & Roadmap Boundaries
 
-- **Single-Tenant / Development Scope (Document Ownership):** In accordance with the 12-week roadmap, user-level ownership, authentication, and multi-tenant access control boundaries are scheduled for Phase 11 (Production Engineering). Current document ingestion and inspection APIs catalog public Sri Lankan legal authorities and are **not production-ready for private, confidential, or multi-user tenant documents**.
-- **OCR Unsupported:** Scanned image-only PDFs without native text layers cannot be extracted; they are persisted as `scanned_only` and rejected with HTTP 422.
+- **Multi-Tenant Isolation & User Ownership (Deferred to Phase 10):** User-level identity, authentication (JWT/OAuth2), multi-tenant isolation, user workspaces, and research projects are formally scheduled for **Phase 10**. Current document ingestion and inspection APIs catalog public Sri Lankan legal authorities and are **not production-ready for private, confidential, or multi-user tenant documents**.
+- **Dense Vector Embeddings & pgvector (Scheduled for Phase 4):** Phase 3 persists text, structural legal hierarchies, and physical page references in PostgreSQL. Vector embeddings, dense similarity indexes, and semantic search are implemented in **Phase 4**.
+- **OCR Pipeline for Historical Scans (Scheduled for Phase 9):** Scanned image-only PDFs without native text layers cannot be extracted; they are persisted as `scanned_only` and rejected with HTTP 422. An asynchronous OCR pipeline (Tesseract/Surya) is scheduled for **Phase 9**.
 - **DOCX and TXT Ingestion:** In adherence to Phase 3 milestone requirements, PDF ingestion is implemented completely. DOCX and plain-text ingestion remain planned for later phases.
-- **Embeddings & Vector Search:** Phase 3 persists text and structural references in PostgreSQL. Vector embeddings and pgvector similarity search belong to Phase 4.
+- **Production Storage Hardening & Advanced Governance (Scheduled for Phase 11):** S3 bucket lifecycle policies, object versioning replication, antivirus/malware scanning streams, and automated retention policies belong to **Phase 11**.

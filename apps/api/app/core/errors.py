@@ -154,6 +154,22 @@ class DocumentVersionConflictError(AppException):
         )
 
 
+class DuplicateDocumentError(AppException):
+    """Raised when an identical document version (by SHA-256) is uploaded for the same logical document."""
+
+    def __init__(
+        self,
+        message: str = "A document version with identical SHA-256 content hash already exists for this document.",
+        details: Any = None,
+    ) -> None:
+        super().__init__(
+            message=message,
+            status_code=status.HTTP_409_CONFLICT,
+            error_code="DUPLICATE_DOCUMENT_VERSION",
+            details=details,
+        )
+
+
 async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
     """Handle custom application exceptions."""
     logger.warning("Application exception [%s] on %s: %s", exc.error_code, request.url.path, exc.message)

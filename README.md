@@ -28,11 +28,11 @@ I recommend following a 12-week, 240-hour development roadmap, based on your pro
 
 | Metric | Status | Details |
 | :--- | :--- | :--- |
-| **Current Milestone** | **Phase 3 — Database & Document Intelligence** | **Completed** (4 November 2026) |
+| **Current Milestone** | **Phase 3 — Database & Document Intelligence** | **Completed with Final Refinements (Tasks 3.1–3.10 & 3.A–3.G)** (4 November 2026) |
 | **Next Milestone** | **Phase 4 — Embeddings & Basic RAG** | **Upcoming** (Tasks 4.1–4.9) |
 | **Overall Progress** | **31%** | 4 of 13 development phases completed (Phase 0, 1, 2, 3 completed) |
 | **Repository Baseline** | Stable | Public Monorepo on `main` ([github.com/Shakir5665/LegalLens-AI](https://github.com/Shakir5665/LegalLens-AI)) |
-| **Backend Runtime** | Operational | Python 3.12.10, FastAPI, Pydantic v2, SQLAlchemy 2.x, PostgreSQL/Psycopg 3, PyMuPDF, Alembic, Pytest suite (121 passed, 1 skipped) |
+| **Backend Runtime** | Operational | Python 3.12.10, FastAPI, Pydantic v2, SQLAlchemy 2.x, PostgreSQL/Psycopg 3, PyMuPDF, Boto3, Alembic, Pytest suite (127 passed, 1 skipped) |
 
 > [!NOTE]
 > **Implementation Boundary:** Phase 0 (Project Foundation), Phase 1 (Backend Engineering Fundamentals), Phase 2 (LLM Engineering), and Phase 3 (Database & Document Intelligence) are **completed**. Future capabilities—including vector embeddings, hybrid retrieval, LangGraph agent workflows, citation verification, and the React frontend—remain planned target architecture and are strictly not yet implemented.
@@ -292,16 +292,16 @@ Two successful live executions of `manual_test_llm.py` were performed against th
 
 ### Phase 3 — Database & Document Intelligence
 
-> **Status:** ✅ **Completed** (4 November 2026)  
-> **Milestone Goal:** Build the legal document management and ingestion foundation with PostgreSQL, SQLAlchemy, PyMuPDF, and structure-aware legal chunking.
+> **Status:** ✅ **Completed with Final Refinements** (4 November 2026)  
+> **Milestone Goal:** Build the legal document management, cloud object storage, and ingestion foundation with PostgreSQL, SQLAlchemy, PyMuPDF, Boto3, and structure-aware legal chunking.
 
-**Objective:** Build a robust, evidence-traceable legal document ingestion pipeline preserving legal structure and physical page references.
+**Objective:** Build a robust, evidence-traceable legal document ingestion pipeline preserving legal structure, physical page references, immutable cloud storage, duplicate protection, failure recovery, and soft-deletion.
 
 |   Task   | What was built | Status |
 | :------: | :--------------------------------- | :----: |
 | **3.1**  | PostgreSQL engine, pooling, psycopg 3 driver, session lifecycle & DI | ✅ Completed |
 | **3.2**  | Relational schema design: `Document` → `DocumentVersion` → `DocumentChunk` | ✅ Completed |
-| **3.3**  | SQLAlchemy 2.x declarative models and Alembic migration system | ✅ Completed |
+| **3.3**  | SQLAlchemy 2.x declarative models and Alembic migration system (`0d36df9d57d0`) | ✅ Completed |
 | **3.4**  | Core database tables, check constraints, foreign key cascades, unique indexes | ✅ Completed |
 | **3.5**  | Multipart document upload endpoint (`POST /api/v1/documents`) | ✅ Completed |
 | **3.6**  | File validation (magic bytes, size, PyMuPDF integrity) & safe atomic storage | ✅ Completed |
@@ -309,56 +309,71 @@ Two successful live executions of `manual_test_llm.py` were performed against th
 | **3.8**  | Technical PDF metadata extraction and strict separation from legal metadata | ✅ Completed |
 | **3.9**  | Immutable document version management & SHA-256 duplicate detection | ✅ Completed |
 | **3.10** | Structure-aware legal chunking (Part, Chapter, Section, Subsection) & fallback | ✅ Completed |
+| **3.A**  | Cloud Object Storage Abstraction & Neon Storage Provider (S3-compatible, boto3) | ✅ Completed |
+| **3.B**  | Private Storage & Short-Lived Presigned Download URLs (10-minute expiry) | ✅ Completed |
+| **3.C**  | Backend-Mediated Ingestion (25 MB limit, streaming SHA-256, magic-byte validation) | ✅ Completed |
+| **3.D**  | Immutable Version Storage (`documents/{doc_id}/versions/{v_id}/{uuid}.pdf`) & HTTP 409 Duplicate Rejection | ✅ Completed |
+| **3.E**  | Document Processing Lifecycle (`processing`, `processed`, `failed`, `scanned_only`) & Manual `/retry` | ✅ Completed |
+| **3.F**  | Soft Deletion (`is_deleted`, `deleted_at`), Active Chunk Purge, & Admin `/restore` | ✅ Completed |
+| **3.G**  | Incremental Legal Chunking (Section heading regex, multi-page tracing, continuation) | ✅ Completed |
 
 #### Completed Architectural Capabilities
 
-1. **Normalized Three-Tier Schema:** `Document` (logical instrument) $\to$ `DocumentVersion` (physical file artifact) $\to$ `DocumentChunk` (traceable legal passage).
-2. **Strict Evidence Traceability:** Every chunk records its logical document, version ID, physical 1-based start page (`page_number`), end page (`page_end`), statutory hierarchy (`part`, `chapter`, `section`, `subsection`, `paragraph`), and SHA-256 `content_hash`.
-3. **Alembic Migration Verification:** Validated with `alembic upgrade head`, `alembic current`, `alembic downgrade -1`, and `alembic upgrade head` directly against Neon PostgreSQL.
-4. **Content-Based File Validation:** Bounded streaming validation checking `%PDF-` magic bytes, size limits (default 25 MB), and internal structure verification via PyMuPDF. Untrusted filenames and MIME headers are strictly sanitized.
-5. **Safe Local Storage Abstraction:** UUID-based storage filenames (`<uuid>.pdf`), directory containment checks preventing path traversal, and automatic cleanup compensation on ingestion failures.
-6. **Scanned PDF Classification:** Distinguishes native-text PDFs from scanned-only documents. Unextractable scanned PDFs are assigned `scanned_only` status in PostgreSQL and return HTTP 422 explaining that OCR is outside Phase 3 scope.
-7. **Deterministic Duplicate Policy:** Uploading an identical PDF (matched by SHA-256) to an existing document reuses the existing version without creating duplicate records. Uploading a distinct file safely increments the version number.
-8. **Inspection Endpoints (Task 16):**
-   - `GET /api/v1/documents/{document_id}`: Detailed document metadata and version history summaries.
-   - `GET /api/v1/documents/{document_id}/versions/{version_number}/chunks`: Complete passage catalog with section and page references.
-   - `GET /api/v1/documents`: Paginated document catalog.
+1. **Normalized Three-Tier Schema:** `Document` (logical instrument) $\to$ `DocumentVersion` (physical file artifact with soft-delete flags) $\to$ `DocumentChunk` (traceable legal passage).
+2. **Storage Provider Abstraction ([ADR-016](docs/decisions/architecture-decisions.md#adr-016-cloud-object-storage-abstraction-neon-s3-compatibility-and-private-presigned-access-control)):** Seamless switching between `LocalStorageProvider` (for local dev/testing with HMAC-signed downloads) and `NeonStorageProvider` (for cloud deployment using Neon S3-compatible storage with path-style addressing in AWS Singapore `ap-southeast-1`).
+3. **Private Storage & Presigned URLs:** Cloud credentials never touch the browser or public client. File downloads are brokered through backend-generated presigned URLs with 10-minute validity.
+4. **Immutable Hierarchical Object Keys:** Persists original PDFs under structured keys: `documents/{document_id}/versions/{version_id}/{uuid}.pdf`. Existing files are never overwritten.
+5. **Strict Duplicate Protection (HTTP 409):** Uploading an identical PDF (by SHA-256) to an existing logical document is rejected with HTTP 409 Conflict (`DUPLICATE_DOCUMENT_VERSION`), preventing silent duplicate versions.
+6. **Soft Deletion & Chunk Purge:** Soft-deleting a version marks `is_deleted=True` and purges all its `DocumentChunk` records from the database, immediately excluding them from search and RAG retrieval while keeping the original PDF for administrative `/restore`.
+7. **Synchronous Lifecycle & Failure Recovery:** Versions transition through `processing`, `processed`, `failed`, or `scanned_only`. Failures during extraction preserve the PDF in storage and record diagnostic metadata, enabling operators to trigger `/retry` without re-uploading.
+8. **Strict Evidence Traceability:** Every chunk records its logical document, version ID, physical 1-based start page (`page_number`), end page (`page_end`), statutory hierarchy (`part`, `chapter`, `section`, `subsection`, `paragraph`), and SHA-256 `content_hash`.
+9. **Source Authenticity Gate:** Ordinary uploads cannot self-certify as `VerifiedOfficial` or `VerifiedSecondary`, enforcing authentic governance for legal research.
+10. **Inspection & Management Endpoints:**
+    - `POST /api/v1/documents`: Ingest legal PDF document.
+    - `GET /api/v1/documents`: List catalogued legal documents with active version counts.
+    - `GET /api/v1/documents/{document_id}`: Detailed document metadata and version history summaries.
+    - `GET /api/v1/documents/{document_id}/versions/{version_number}/chunks`: Complete passage catalog with section and page references.
+    - `GET /api/v1/documents/{document_id}/versions/{version_number}/download`: Presigned download URL (10-minute expiry).
+    - `GET /api/v1/documents/download-file`: Signed local file streaming endpoint.
+    - `DELETE /api/v1/documents/{document_id}/versions/{version_number}`: Soft delete document version.
+    - `POST /api/v1/documents/{document_id}/versions/{version_number}/restore`: Restore soft-deleted document version.
+    - `POST /api/v1/documents/{document_id}/versions/{version_number}/retry`: Re-process failed document version.
 
 #### Automated Test Suite Verification
 
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.12.10, pytest-8.4.2 -- rootdir: LegalLens-AI
-collected 121 items
+collected 128 items
 
-apps/api/tests/test_config.py ......................... [  2%]
-apps/api/tests/test_db_connectivity.py ................ [ 14%]
-apps/api/tests/test_dependencies.py ................... [ 16%]
-apps/api/tests/test_document_models.py ................ [ 21%]
-apps/api/tests/test_documents_api.py .................. [ 29%]
-apps/api/tests/test_error_handling.py ................. [ 31%]
-apps/api/tests/test_health_api.py ..................... [ 33%]
-apps/api/tests/test_legal_chunking.py ................. [ 36%]
+apps/api/tests/test_config.py ......................... [  1%]
+apps/api/tests/test_db_connectivity.py ................ [ 13%]
+apps/api/tests/test_dependencies.py ................... [ 15%]
+apps/api/tests/test_document_models.py ................ [ 20%]
+apps/api/tests/test_documents_api.py .................. [ 30%]
+apps/api/tests/test_error_handling.py ................. [ 32%]
+apps/api/tests/test_health_api.py ..................... [ 34%]
+apps/api/tests/test_legal_chunking.py ................. [ 37%]
 apps/api/tests/test_llm_config_and_pricing.py ......... [ 48%]
 apps/api/tests/test_llm_provider.py ................... [ 58%] (1 skipped)
 apps/api/tests/test_llm_retries_and_errors.py ......... [ 63%]
-apps/api/tests/test_llm_service.py .................... [ 71%]
-apps/api/tests/test_llm_validation.py ................. [ 78%]
-apps/api/tests/test_pdf_extraction.py ................. [ 83%]
-apps/api/tests/test_postgres_document_integration.py .. [ 84%]
-apps/api/tests/test_schemas.py ........................ [ 88%]
-apps/api/tests/test_sources_api.py .................... [ 94%]
+apps/api/tests/test_llm_service.py .................... [ 70%]
+apps/api/tests/test_llm_validation.py ................. [ 77%]
+apps/api/tests/test_pdf_extraction.py ................. [ 82%]
+apps/api/tests/test_postgres_document_integration.py .. [ 82%]
+apps/api/tests/test_schemas.py ........................ [ 86%]
+apps/api/tests/test_sources_api.py .................... [ 92%]
 apps/api/tests/test_storage_service.py ................ [100%]
 
-======================= 121 passed, 1 skipped in 14.60s =======================
+======================= 127 passed, 1 skipped in 11.94s =======================
 ```
 
-- **Tests Collected:** 122
-- **Passed:** 121 (100% of runnable tests)
+- **Tests Collected:** 128
+- **Passed:** 127 (100% of runnable tests)
 - **Skipped:** 1 (`test_real_gemini_api_integration`, offline determinism)
 - **Failed:** 0
 - **Regression:** Zero regression; all 87 baseline tests from Phase 1, Phase 2, and Task 3.1 remain passing.
-- **PostgreSQL Integration:** Verified live against Neon cloud PostgreSQL (`apps/api/scripts/verify_phase3_postgres.py` passed with 100% success).
+- **PostgreSQL Integration:** Verified live against Neon cloud PostgreSQL (`apps/api/tests/test_postgres_document_integration.py` passed with 100% success).
 
 ---
 

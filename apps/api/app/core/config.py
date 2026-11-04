@@ -40,8 +40,15 @@ class Settings(BaseSettings):
     db_connect_timeout: float = 10.0
 
     # Storage Configuration (Phase 3 Document Storage & Ingestion)
+    storage_provider: str = "local"  # 'local' or 'neon'
     storage_dir: str = "storage"
     max_upload_size_bytes: int = 25 * 1024 * 1024  # 25 MB default
+    storage_url_expiry_seconds: int = 600  # 10 minutes default
+    neon_storage_endpoint: str | None = None
+    neon_storage_region: str = "ap-southeast-1"
+    neon_storage_bucket: str = "legallens-documents"
+    neon_storage_access_key: str | None = None
+    neon_storage_secret_key: str | None = None
 
     # Frontend Placeholders (Phase 10)
     cors_origins: str = "http://localhost:5173"
