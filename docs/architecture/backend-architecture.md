@@ -9,7 +9,7 @@
 
 ## 1. Overview & Architectural Boundaries
 
-The LegalLens AI backend is designed as a **Modular Monolith** ([ADR-001](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-001-use-a-modular-monolithic-backend)) executed within a single Python runtime ([ADR-013](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-013-select-python-312-as-the-core-backend-runtime)).
+The LegalLens AI backend is designed as a **Modular Monolith** ([ADR-001](../decisions/architecture-decisions.md#adr-001-use-a-modular-monolithic-backend)) executed within a single Python runtime ([ADR-013](../decisions/architecture-decisions.md#adr-013-select-python-312-as-the-core-backend-runtime)).
 
 Phase 1 (Backend Engineering Fundamentals) and Phase 2 (LLM Engineering) establish the foundational backend services, data modeling, error handling, and Gemini-powered LLM capabilities:
 - **Centralized Configuration:** Type-safe settings loaded from `.env` via `pydantic-settings` with singleton caching (`gemini_model`, timeouts, retries, temperature).
@@ -18,7 +18,7 @@ Phase 1 (Backend Engineering Fundamentals) and Phase 2 (LLM Engineering) establi
 - **Decoupled Architecture:** Provider abstraction (`LLMProvider` Protocol), Prompt templates (`PromptTemplate`), and application services (`LLMService`, `LegalSourceService`).
 - **Resilient Model Invocation:** Bounded retries with exponential backoff and jitter (`execute_with_retry`), `Retry-After` header respect, and strict 30s timeouts.
 - **Deterministic Token Accounting:** Full capture of input, output, and native Gemini 2.5 Flash thinking tokens (`thoughtsTokenCount`) with mathematical cost estimation ($0.30/1M in, $2.50/1M out).
-- **Privacy-Safe Telemetry:** Structured model-call logging compliant with [ADR-014](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation) (no prompts, document text, or secrets in logs).
+- **Privacy-Safe Telemetry:** Structured model-call logging compliant with [ADR-014](../decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation) (no prompts, document text, or secrets in logs).
 - **100% Deterministic Testing:** 73 automated pytest tests (72 passed, 1 skipped offline integration test; 0 failed) with zero regression on Phase 1 tests.
 
 ---
@@ -184,7 +184,7 @@ sequenceDiagram
 
 ### 4.1 Provider Abstraction Layer
 
-The provider abstraction decouples application logic from vendor SDK internals using a lightweight Python Protocol ([ADR-001](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-001-use-a-modular-monolithic-backend)):
+The provider abstraction decouples application logic from vendor SDK internals using a lightweight Python Protocol ([ADR-001](../decisions/architecture-decisions.md#adr-001-use-a-modular-monolithic-backend)):
 
 ```python
 # apps/api/app/providers/base.py
@@ -312,7 +312,7 @@ LegalLens AI adopts a staged observability roadmap:
 - **Phase 7 (Planned):** Agent & workflow observability (LangGraph step traces, node transitions, checkpointing).
 - **Phase 9 (Planned):** Advanced observability & Harness Engineering (runtime budgets, cost caps, execution audits).
 
-#### Privacy-Safe Operational Logging ([ADR-014](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation))
+#### Privacy-Safe Operational Logging ([ADR-014](../decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation))
 Logs emit structured operational metrics but strictly forbid sensitive user inputs:
 - **Logged:** Correlation ID, model name, provider, latency (seconds), input tokens, output tokens, thinking tokens, total tokens, estimated cost (USD), retry count, success status, and sanitized error categories.
 - **Forbidden from Logs:** Raw prompt text, user queries, full model responses, legal document contents, API keys, or provider authorization headers.
@@ -437,7 +437,7 @@ $env:GEMINI_API_KEY="your-api-key"
 
 1. **Pure Standard Library Logging:** We utilized standard Python `logging` with structured formatting instead of introducing heavyweight external logging frameworks (`loguru`, `structlog`).
 2. **Pydantic Settings with Singleton Caching:** Configuration is validated via `pydantic-settings` and memoized with `@lru_cache`, ensuring zero parsing overhead per request.
-3. **Traceback Masking Middleware:** To enforce [ADR-014](file:///C:/Users/shaki/Desktop/LegalLense/docs/decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation), unhandled 500 errors are trapped by an outer HTTP middleware and sanitized into `ErrorResponse`.
+3. **Traceback Masking Middleware:** To enforce [ADR-014](../decisions/architecture-decisions.md#adr-014-maintain-public-repository-with-strict-credential-isolation), unhandled 500 errors are trapped by an outer HTTP middleware and sanitized into `ErrorResponse`.
 4. **Single-Provider Architecture with Protocol:** In adherence to Phase 2 guidelines, we integrated Gemini exclusively via `GeminiProvider` while maintaining a lightweight `LLMProvider` Protocol, intentionally avoiding premature multi-provider complexity.
 5. **Strict Pydantic v2 Output Validation:** Model output is treated as untrusted text. We parse and validate via `model_validate_json()`, raising typed `LLMResponseValidationError` on syntax or schema errors.
 6. **Thinking-Token Accounting in Cost Calculations:** To prevent under-reporting operational costs on reasoning models (Gemini 2.5 Flash), `thoughtsTokenCount` is explicitly tracked and billed at standard output rates.
@@ -448,6 +448,6 @@ $env:GEMINI_API_KEY="your-api-key"
 ## 9. Known Limitations & Roadmap Boundaries
 
 - **Thinking Budget Control:** `thinking_budget` configuration parameter is deferred to Phase 7 (Agentic AI Engineering) when agent workflow budgets are introduced.
-- **Context Caching:** Gemini context caching requires a minimum token threshold (32,768 tokens) and is deferred to Phase 3 and Phase 4 when full legal document corpuses are ingested.
+- **Provider-Side Context Caching:** Token pricing for cached tokens ($0.03/1M cached tokens) is supported in the pricing registry. However, provider-side Gemini context caching requires a minimum input threshold of 32,768 tokens and incurs storage TTL fees. Provider-side context caching is strictly optional and will only be evaluated in a later phase (such as Phase 7 or Phase 11) if workload size and token economics justify it. It is not scheduled for implementation in Phase 3 or Phase 4 (see [Caching Strategy](caching-strategy.md) and [ADR-015](../decisions/architecture-decisions.md#adr-015-introduce-a-version-aware-application-level-caching-layer)).
 - **In-Memory Catalog:** Legal source catalog remains in-memory until Phase 3 (Database & Document Intelligence) introduces PostgreSQL and pgvector.
-- **Implementation Boundary:** Phase 3 (Database & Document Intelligence) is strictly the next unstarted phase. No database tables, SQLAlchemy models, pgvector extensions, embeddings, or LangGraph agents have been introduced.
+- **Implementation Boundary:** Phase 0, Phase 1, and Phase 2 are complete. Phase 3 (Database & Document Intelligence) is currently in progress. Core capabilities scheduled for Phase 4 and later (embeddings, pgvector semantic search, hybrid retrieval pipelines, LangGraph agent workflows, citation verification, and React frontend) remain planned target architecture and are strictly not yet implemented.

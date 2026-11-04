@@ -285,7 +285,7 @@ Two successful live executions of `manual_test_llm.py` were performed against th
 
 - **Thinking Budget Controls:** Gemini 2.5 Flash operates with a dynamic internal reasoning budget by default. Direct thinking budget limits via `types.ThinkingConfig` may be tuned in later agentic phases if lower latency is required.
 - **Multimodal & Audio Accounting:** Multimodal tokens (audio/video) and long-term cached storage costs are not modeled as they are outside the current text-based legal research scope.
-- **Multi-Turn Context Caching:** Prompt caching is supported in the pricing registry ($0.03/1M cached tokens) but automated cache creation is deferred to Phase 3/4 when large legal statutes are ingested.
+- **Provider-Side Context Caching:** Token pricing for cached tokens ($0.03/1M cached tokens) is modeled in the pricing registry. However, Google Gemini context caching enforces a strict minimum threshold of 32,768 tokens and incurs hourly storage fees. Provider-side context caching is strictly optional and will only be evaluated in a later phase (such as Phase 7 or Phase 11) when workload size (e.g., massive statutory compendiums held persistently in context) and economics justify it; it is not part of Phase 3 or Phase 4 deliverables (see [Caching Strategy](docs/architecture/caching-strategy.md)).
 - **Workflow-Level Tracing:** Multi-step agent execution tracing is deferred to Phase 7 (LangGraph).
 
 ---
